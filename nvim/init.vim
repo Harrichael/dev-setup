@@ -32,21 +32,31 @@ set wildmode=longest,list   " get bash-like tab completions
 set clipboard=unnamedplus   " using system clipboard
 
 " Custom Editing Functions
-source cpp_primitives.vim
-command -nargs=1 I call CPPAddIncludeFromArg(<f-args>)
-command -nargs=0 Ip call CPPAddIncludeFromArg(getreg('0'))
-command -nargs=0 Ipp call CPPAddIncludeToOtherPane()
-
-command -nargs=1 U call CPPAddUsingFromArg(<f-args>)
-command -nargs=0 Up call CPPAddUsingFromArg(getreg('0'))
-
-command -nargs=1 Uh call CPPAddUsingFromArgInHeader(<f-args>)
-command -nargs=0 Uph call CPPAddUsingFromArgInHeader(getreg('0'))
+"source cpp_primitives.vim
+"command -nargs=1 I call CPPAddIncludeFromArg(<f-args>)
+"command -nargs=0 Ip call CPPAddIncludeFromArg(getreg('0'))
+"command -nargs=0 Ipp call CPPAddIncludeToOtherPane()
+"
+"command -nargs=1 U call CPPAddUsingFromArg(<f-args>)
+"command -nargs=0 Up call CPPAddUsingFromArg(getreg('0'))
+"
+"command -nargs=1 Uh call CPPAddUsingFromArgInHeader(<f-args>)
+"command -nargs=0 Uph call CPPAddUsingFromArgInHeader(getreg('0'))
 
 " Plugins
 
 call plug#begin()
 Plug 'ggandor/leap.nvim'
+
+Plug 'hrsh7th/cmp-buffer'
+Plug 'hrsh7th/cmp-nvim-lua'
+Plug 'hrsh7th/cmp-path'
+Plug 'hrsh7th/cmp-vsnip'
+Plug 'hrsh7th/nvim-cmp'
+Plug 'hrsh7th/vim-vsnip'
+Plug 'hrsh7th/cmp-nvim-lsp'
+Plug 'neovim/nvim-lspconfig'
+Plug 'onsails/lspkind.nvim'
 call plug#end()
 
 " Leap is for leaping the cursor within the current window frame
