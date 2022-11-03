@@ -8,9 +8,17 @@ if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
   print("Packer installed. You'll need to restart now.")
 end
 
+-- :PackerUpdate
+-- :PackerSync
+
 require('packer').startup(function(use)
-  
   use 'wbthomason/packer.nvim'
-  use 'hrsh7th/cmp-buffer'
+
+  use {
+    'ggandor/leap.nvim',
+    config = function()
+        require('leap').set_default_keymaps()
+    end
+  }
 
 end)
