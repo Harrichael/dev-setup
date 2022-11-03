@@ -18,6 +18,8 @@ set showmatch               " show matching parens
 
 " Usability
 set ttyfast                 " Speed up scrolling in Vim
+set history=10000           " Elephants never forget
+set autoread                " If the file changes outside vim, automatically read it again
 
 " Interopability
 filetype plugin on
