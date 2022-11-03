@@ -24,9 +24,11 @@ git clone git@github.com:Harrichael/dev-setup.git
 source ~/dev-setup/.bashrc
 ```
 
-~/.config/nvim/init.vim
+~/.config/nvim/init.lua
 ```
-source ~/dev-setup/nvim/init.vim
+local home_dir = os.getenv("HOME")
+package.path = home_dir .. "/dev-setup/nvim/" .. package.path
+require("init_base")
 ```
 
 ~/.gitconfig
