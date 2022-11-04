@@ -28,7 +28,7 @@ vim.api.nvim_create_autocmd(       -- Saves the position of screen at exit
 vim.api.nvim_create_autocmd(       -- Restores last screen position 
   'BufWinEnter',
   {
-    command = [[silent loadview]]
+    command = [[silent! loadview]]
   }
 )
 
