@@ -19,6 +19,7 @@ vim.o.showmatch   = true           -- show matching parens
 vim.o.ttyfast     = true           -- Speed up scrolling in Vim
 vim.o.history     = 10000           -- Elephants never forget
 vim.o.autoread    = true           -- If the file changes outside vim, automatically read it again
+vim.o.scrolloff   = 5              -- Minimum spacing from current line to top or bottom
 vim.api.nvim_create_autocmd(       -- Saves the position of screen at exit 
   'BufWinLeave',
   {
