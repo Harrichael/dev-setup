@@ -35,17 +35,3 @@ vim.api.nvim_create_autocmd(       -- Restores last screen position
 -- Functional Behavior
 vim.o.wildmode    = longest,list   -- get bash-like tab completions
 vim.o.clipboard   = unnamedplus   -- using system clipboard
-
---Plugins
-
--- require('leap')
---require('plugins/ggandor/leap.nvim')
---require('plugins/hrsh7th/cmp-buffer')
---require('plugins/hrsh7th/cmp-nvim-lua')
---require('plugins/hrsh7th/cmp-path')
---require('plugins/hrsh7th/cmp-vsnip')
---require('plugins/hrsh7th/nvim-cmp')
---require('plugins/hrsh7th/vim-vsnip')
---require('plugins/hrsh7th/cmp-nvim-lsp')
---require('plugins/neovim/nvim-lspconfig')
---require('plugins/onsails/lspkind.nvim')
