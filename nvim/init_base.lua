@@ -19,6 +19,18 @@ vim.o.showmatch   = true           -- show matching parens
 vim.o.ttyfast     = true           -- Speed up scrolling in Vim
 vim.o.history     = 10000           -- Elephants never forget
 vim.o.autoread    = true           -- If the file changes outside vim, automatically read it again
+vim.api.nvim_create_autocmd(       -- Saves the position of screen at exit 
+  'BufWinLeave',
+  {
+    command = [[mkview]]
+  }
+)
+vim.api.nvim_create_autocmd(       -- Restores last screen position 
+  'BufWinEnter',
+  {
+    command = [[silent loadview]]
+  }
+)
 
 -- Functional Behavior
 vim.o.wildmode    = longest,list   -- get bash-like tab completions
