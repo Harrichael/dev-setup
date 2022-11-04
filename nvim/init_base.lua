@@ -36,3 +36,9 @@ vim.api.nvim_create_autocmd(       -- Restores last screen position
 -- Functional Behavior
 vim.o.wildmode    = 'longest,list'   -- get bash-like tab completions
 vim.o.clipboard   = 'unnamedplus'   -- using system clipboard
+
+-- Keymaps
+vim.g.mapleader = ' '               -- Use space to prefix our custom functions that won't collide with builtins
+vim.keymap.set('n', 'x', '"_x')     -- Use x key to delete characters without overwriting register
+vim.keymap.set('n', '<leader>l', ':nohl<CR>')   -- Clear search highlights
+
