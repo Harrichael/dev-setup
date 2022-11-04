@@ -34,5 +34,5 @@ vim.api.nvim_create_autocmd(       -- Restores last screen position
 )
 
 -- Functional Behavior
-vim.o.wildmode    = longest,list   -- get bash-like tab completions
-vim.o.clipboard   = unnamedplus   -- using system clipboard
+vim.o.wildmode    = 'longest,list'   -- get bash-like tab completions
+vim.o.clipboard   = 'unnamedplus'   -- using system clipboard
