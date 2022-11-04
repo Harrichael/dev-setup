@@ -27,7 +27,7 @@ source ~/dev-setup/.bashrc
 ~/.config/nvim/init.lua
 ```
 local home_dir = os.getenv("HOME")
-package.path = home_dir .. "/dev-setup/nvim/" .. package.path
+package.path = ";" .. home_dir .. "/dev-setup/nvim/" .. package.path
 require("init_base")
 require("plugins_base")
 ```
