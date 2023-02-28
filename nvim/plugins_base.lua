@@ -51,6 +51,16 @@ require('packer').startup(function(use)
   --   <character-to-surround-with>
   use 'tpope/vim-surround'
 
+  -- To finish setup:
+  --   1. Navigate to packer's git clone location
+  --     a. Open compiled packer lua file, example:
+  --        `~/.config/nvim/plugin/packer_compiled.lua`
+  --     b. Example of above:
+  --        `~/.local/share/nvim/site/pack/packer/start/YouCompleteMe`
+  --   2. Compile project:
+  --      `./install.py --all`
+  use 'ycm-core/YouCompleteMe'
+
   
   if packer_bootstrap then
     require("packer").sync()
