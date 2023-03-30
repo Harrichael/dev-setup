@@ -59,7 +59,7 @@ require('packer').startup(function(use)
   --        `~/.local/share/nvim/site/pack/packer/start/YouCompleteMe`
   --   2. Compile project:
   --      `./install.py --all`
-  use 'ycm-core/YouCompleteMe'
+  --use 'ycm-core/YouCompleteMe'
 
   
   if packer_bootstrap then
