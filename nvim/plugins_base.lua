@@ -61,6 +61,11 @@ require('packer').startup(function(use)
   --      `./install.py --all`
   --use 'ycm-core/YouCompleteMe'
 
+  -- To setup:
+  --   run :Copilot setup
+  --   see the github readme for more.
+  use 'github/copilot.vim'
+
   
   if packer_bootstrap then
     require("packer").sync()

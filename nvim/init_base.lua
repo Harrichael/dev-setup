@@ -9,8 +9,8 @@ vim.g.noincsearch = true            -- incremental search is annoying
 -- Indentation
 vim.o.autoindent  = true           -- indent a new line the same amount as the line just typed
 vim.o.expandtab   = true           -- converts tabs to white space
-vim.o.shiftwidth  = 2              -- uses 2 spaces for a tab, used for auto indenting
-vim.o.tabstop     = 2              -- uses 2 spaces for a tab, used when hitting tab key explicitly
+vim.o.shiftwidth  = 4              -- uses 4 spaces for a tab, used for auto indenting
+vim.o.tabstop     = 4              -- uses 4 spaces for a tab, used when hitting tab key explicitly
 
 -- Static Appearance
 vim.o.number      = true           -- add line numbers
