@@ -44,3 +44,10 @@ vim.g.mapleader = ' '               -- Use space to prefix our custom functions 
 vim.keymap.set('n', 'x', '"_x')     -- Use x key to delete characters without overwriting register
 vim.keymap.set('n', '<leader>l', ':nohl<CR>')   -- Clear search highlights
 
+--Treesitter highlighting
+require'nvim-treesitter.configs'.setup {
+    highlight = {
+        enable = true,
+    },
+}
+

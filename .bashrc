@@ -12,3 +12,5 @@ alias gls="git ls-files && git ls-files --exclude-standard --others"
 
 # Old habits die hard
 alias vim="nvim"
+
+export ERL_AFLAGS="-kernel shell_history enabled"

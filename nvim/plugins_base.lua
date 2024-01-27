@@ -66,6 +66,15 @@ require('packer').startup(function(use)
   --   see the github readme for more.
   use 'github/copilot.vim'
 
+  -- Treesitter
+  use {
+    'nvim-treesitter/nvim-treesitter',
+    run = ':TSUpdate'
+  }
+
+  -- Syntax highlighting
+  --use { 'm-demare/hlargs.nvim' }
+  --require('hlargs').setup()
   
   if packer_bootstrap then
     require("packer").sync()
