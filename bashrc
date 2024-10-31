@@ -45,6 +45,28 @@ alias grep='grep --color=auto'
 
 alias gls="git ls-files && git ls-files --exclude-standard --others"
 
+alias v="nvim"
+
+alias go="cd ~/.go && cd -P "
+mkdir -p ~/.go
+golink() {
+    if [ -z "$1" ]; then
+        echo "Usage: golink <name>"
+        return 1
+    fi
+
+    local target="$PWD"
+    local link_name="$HOME/.go/$1"
+
+    if [ -e "$link_name" ]; then
+        echo "Error: '$link_name' already exists."
+        return 1
+    fi
+
+    ln -s "$target" "$link_name"
+    echo "Created symlink: $link_name -> $target"
+}
+
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
