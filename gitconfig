@@ -9,5 +9,5 @@
         diff = auto
         interactive = auto
         status = auto
-[user]
-	name = Harrichael
+[core]
+        editor = nvim
