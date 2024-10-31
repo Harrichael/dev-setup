@@ -64,7 +64,7 @@ require('packer').startup(function(use)
   -- To setup:
   --   run :Copilot setup
   --   see the github readme for more.
-  use 'github/copilot.vim'
+  -- use 'github/copilot.vim'
 
   -- Treesitter
   use {
