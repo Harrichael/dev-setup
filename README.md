@@ -21,7 +21,7 @@ git clone git@github.com:Harrichael/dev-setup.git
 
 ~/.bashrc
 ```
-source ~/dev-setup/.bashrc
+source ~/dev-setup/bashrc
 ```
 
 ~/.config/nvim/init.lua
@@ -35,5 +35,5 @@ require("plugins_base")
 ~/.gitconfig
 ```
 [include]
-        path= ~/dev-setup/.gitconfig
+        path= ~/dev-setup/gitconfig
 ```
