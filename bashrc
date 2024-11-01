@@ -44,6 +44,7 @@ alias vdir='vdir --color=auto'
 alias grep='grep --color=auto'
 
 alias gls="git ls-files && git ls-files --exclude-standard --others"
+alias gtree="git ls-tree -r --name-only HEAD | tree --fromfile"
 
 alias v="nvim"
 
