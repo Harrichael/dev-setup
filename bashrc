@@ -44,6 +44,7 @@ alias vdir='vdir --color=auto'
 alias grep='grep --color=auto'
 
 alias ngrep='grep --exclude-dir=node_modules'
+alias npx_test_all="npx nx run-many -t test"
 
 alias gls="git ls-files && git ls-files --exclude-standard --others"
 alias gtree="git ls-tree -r --name-only HEAD | tree --fromfile"
