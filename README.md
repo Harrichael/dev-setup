@@ -3,9 +3,7 @@
 Installation prerequisites
 
 ```
-# sudo apt install gh
-sudo apt install neovim
-
+# For neovim plugins
 sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 ```
@@ -21,7 +19,19 @@ git clone git@github.com:Harrichael/dev-setup.git
 
 ~/.bashrc
 ```
-source ~/dev-setup/bashrc
+source <PATH_TO_USER_DIR>/dev-setup/bashrc
+```
+
+/root/.bashrc
+```
+source <PATH_TO_USER_DIR>/dev-setup/bashrc
+```
+
+/etc/rc.local # chmod +x /etc/rc.local
+```
+#! /bin/sh
+
+source <PATH_TO_USER_DIR>/dev-setup/rc.local
 ```
 
 ~/.config/nvim/init.lua
