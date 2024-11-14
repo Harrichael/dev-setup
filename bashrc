@@ -16,7 +16,7 @@ shopt -s histappend
 shopt -s checkwinsize
 
 
-# Erland shell History
+# Erlang shell History
 export ERL_AFLAGS="-kernel shell_history enabled"
 
 
@@ -42,17 +42,20 @@ alias ls='ls --color=auto'
 alias dir='dir --color=auto'
 alias vdir='vdir --color=auto'
 alias grep='grep --color=auto'
+alias cgrep='grep --color=always'
 
-alias ngrep='grep --exclude-dir=node_modules'
-alias nx_test_all="npx nx run-many -t test"
+alias ngrep='grep --exclude-dir=node_modules --exclude-dir=".nx" --exclude-dir=dist'
+alias ncgrep='grep --color=always --exclude-dir=node_modules --exclude-dir=dist'
+alias nx="npx nx"
+alias nx_test_all="npx nx run-many -t test --skip-nx-cache"
 
 alias gls="git ls-files && git ls-files --exclude-standard --others"
 alias gtree="git ls-tree -r --name-only HEAD | tree --fromfile"
 
 alias v="nvim"
 
-alias go="cd ~/.go && cd -P "
-mkdir -p ~/.go
+alias go="cd $BASE_PATH/.go && cd -P "
+mkdir -p $BASE_PATH/.go
 golink() {
     if [ -z "$1" ]; then
         echo "Usage: golink <name>"
@@ -75,3 +78,15 @@ golink() {
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+
+# FNM setup, see https://github.com/Schniz/fnm
+# Install: curl -fsSL https://fnm.vercel.app/install | bash
+FNM_PATH="$BASE_PATH/.local/share/fnm"
+if [ -d "$FNM_PATH" ]; then
+  export PATH="$FNM_PATH:$PATH"
+  eval "`fnm env`"
+fi
+
+eval "$(fnm env --use-on-cd --shell bash)"
+
