@@ -53,19 +53,11 @@ vim.keymap.set('n', '<leader>l', ':nohl<CR>')   -- Clear search highlights
 
 --Treesitter config
 require'nvim-treesitter.configs'.setup {
+    ensure_installed = { "hcl" },
     highlight = {
         enable = true,
     },
 }
-
-local parsers = require'nvim-treesitter.parsers'
-local ensure_installed = { "hcl" }
-
-for _, lang in ipairs(ensure_installed) do
-  if not parsers.has_parser(lang) then
-    vim.cmd("TSInstall " .. lang)
-  end
-end
 
 vim.filetype.add({
   extension = {
