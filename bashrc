@@ -1,4 +1,10 @@
 
+if [[ -z "${BASE_PATH}" ]]; then
+  echo "Error: BASE_PATH is not defined. Please define it in your .bashrc file before sourcing this script."
+  return 1
+fi
+
+
 PS1='[\D{%T}] ${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]$(__git_ps1 " (git:%s)")\n\[\033[01;34m\]\w\[\033[00m\]\n\$ '
 
 
@@ -82,6 +88,7 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 
 # FNM setup, see https://github.com/Schniz/fnm
 # Install: curl -fsSL https://fnm.vercel.app/install | bash
+# Delete the appended text from your .bashrc since we have it here.
 FNM_PATH="$BASE_PATH/.local/share/fnm"
 if [ -d "$FNM_PATH" ]; then
   export PATH="$FNM_PATH:$PATH"
