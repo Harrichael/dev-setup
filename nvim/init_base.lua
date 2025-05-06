@@ -26,18 +26,37 @@ vim.o.history     = 10000          -- Elephants never forget
 vim.o.autoread    = true           -- If the file changes outside vim, automatically read it again
 vim.o.autochdir   = false          -- Don't auto change directory! Logic is busted, avoid. KISS.
 vim.o.scrolloff   = 5              -- Minimum spacing from current line to top or bottom
-vim.api.nvim_create_autocmd(       -- Saves the position of screen at exit 
-  'BufWinLeave',
-  {
-    command = [[mkview]]
-  }
-)
-vim.api.nvim_create_autocmd(       -- Restores last screen position 
-  'BufWinEnter',
-  {
-    command = [[silent! loadview]]
-  }
-)
+local function clean_view_file(view_file)
+  local lines = {}
+  for line in io.lines(view_file) do
+    if not line:match("^cd ") then -- Exclude lines starting with 'cd '
+      table.insert(lines, line)
+    end
+  end
+
+  -- Overwrite the view file with the filtered content
+  local file = io.open(view_file, "w")
+  if file then
+    file:write(table.concat(lines, "\n"))
+    file:close()
+  end
+end
+-- vim.api.nvim_create_autocmd(       -- Saves the position of screen at exit 
+--   'BufWinLeave',
+--   {
+--     callback = function()
+--       local view_file = vim.fn.expand("~/.config/nvim/view/") .. vim.fn.bufname():gsub("/", "%%") .. ".vim"
+--       vim.cmd("mkview!")
+--       clean_view_file(view_file)
+--     end,
+--   }
+-- )
+-- vim.api.nvim_create_autocmd(       -- Restores last screen position 
+--   'BufWinEnter',
+--   {
+--     command = [[silent! loadview]]
+--   }
+-- )
 
 
 -- Functional Behavior

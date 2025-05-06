@@ -43,7 +43,6 @@ if ! shopt -oq posix; then
   fi
 fi
 
-
 alias ls='ls --color=auto'
 alias dir='dir --color=auto'
 alias vdir='vdir --color=auto'
@@ -80,6 +79,30 @@ golink() {
     echo "Created symlink: $link_name -> $target"
 }
 
+ssg() {
+    if [ $# -ne 2 ]; then
+        echo "Usage: ssg <search_string> <replace_string>"
+        return 1
+    fi
+
+    local search="$1"
+    local replace="$2"
+
+    # Use find to locate all files and sed to replace strings
+    find . -type f -exec sed -i "s/$search/$replace/g" {} +
+    echo "Replaced '$search' with '$replace' in all files recursively."
+}
+
+ssgr() {
+    if [ $# -ne 2 ]; then
+        echo "Usage: ssgr <replace_string> <search_string>"
+        return 1
+    fi
+
+    ssg "$2" "$1"
+}
+
+export PATH="/snap/bin:$PATH"
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert

@@ -64,7 +64,34 @@ require('packer').startup(function(use)
   -- To setup:
   --   run :Copilot setup
   --   see the github readme for more.
-  -- use 'github/copilot.vim'
+  use 'github/copilot.vim'
+
+  -- deps
+  use 'nvim-lua/plenary.nvim'
+  use 'nvim-telescope/telescope.nvim'
+  use {
+    'CopilotC-Nvim/CopilotChat.nvim',
+    branch = 'main',
+    dependencies = {
+      'github/copilot.vim', -- Ensure Copilot is installed
+      'nvim-lua/plenary.nvim', -- Required for CopilotChat
+      'nvim-telescope/telescope.nvim', -- Optional, for better UI
+    },
+    config = function()
+      require('CopilotChat').setup {
+        window = {
+          layout = 'vertical', -- Chat in a vertical split
+          width = 0.35,        -- 40% of screen width
+          border = 'single',
+        },
+        auto_follow_cursor = false, -- Keep chat focused on selection
+      }
+
+      vim.api.nvim_set_keymap('n', '<leader>cc', ':CopilotChat<CR>', { noremap = true, silent = true, desc = 'Open Copilot Chat' })
+      vim.api.nvim_set_keymap('n', '<leader>ce', ':CopilotChatExplain<CR>', { noremap = true, silent = true, desc = 'Explain selected code' })
+      vim.api.nvim_set_keymap('n', '<leader>cr', ':CopilotChatReview<CR>', { noremap = true, silent = true, desc = 'Review selected code' })
+    end,
+  }
 
   -- Treesitter
   use {

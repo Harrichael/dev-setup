@@ -1,2 +1,2 @@
 #! /bin/sh
-unclutter -idle 5 -root &
+# unclutter -idle 5 -root &
