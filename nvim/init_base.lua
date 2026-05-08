@@ -1,5 +1,8 @@
 
 
+-- Disable Copilot on startup. To re-enable: :Copilot enable (or comment this line out)
+vim.g.copilot_enabled = false
+
 -- Searching
 vim.o.ignorecase  = true           -- case insensitive 
 vim.o.smartcase   = true           -- requires ignorecase, but capitals in searchs are not ignored

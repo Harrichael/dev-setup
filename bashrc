@@ -103,6 +103,7 @@ ssgr() {
 }
 
 export PATH="/snap/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH"
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
