@@ -120,4 +120,5 @@ if [ -d "$FNM_PATH" ]; then
 fi
 
 eval "$(fnm env --use-on-cd --shell bash)"
+eval "$(choros shell-init)"
 
