@@ -64,34 +64,47 @@ require('packer').startup(function(use)
   -- To setup:
   --   run :Copilot setup
   --   see the github readme for more.
-  use 'github/copilot.vim'
+  -- use 'github/copilot.vim'
 
   -- deps
   use 'nvim-lua/plenary.nvim'
-  use 'nvim-telescope/telescope.nvim'
   use {
-    'CopilotC-Nvim/CopilotChat.nvim',
-    branch = 'main',
-    dependencies = {
-      'github/copilot.vim', -- Ensure Copilot is installed
-      'nvim-lua/plenary.nvim', -- Required for CopilotChat
-      'nvim-telescope/telescope.nvim', -- Optional, for better UI
-    },
+    'nvim-telescope/telescope.nvim',
     config = function()
-      require('CopilotChat').setup {
-        window = {
-          layout = 'vertical', -- Chat in a vertical split
-          width = 0.35,        -- 40% of screen width
-          border = 'single',
-        },
-        auto_follow_cursor = false, -- Keep chat focused on selection
-      }
-
-      vim.api.nvim_set_keymap('n', '<leader>cc', ':CopilotChat<CR>', { noremap = true, silent = true, desc = 'Open Copilot Chat' })
-      vim.api.nvim_set_keymap('n', '<leader>ce', ':CopilotChatExplain<CR>', { noremap = true, silent = true, desc = 'Explain selected code' })
-      vim.api.nvim_set_keymap('n', '<leader>cr', ':CopilotChatReview<CR>', { noremap = true, silent = true, desc = 'Review selected code' })
-    end,
+      vim.keymap.set('n', '<leader>ff', ':Telescope find_files<CR>', { desc = 'Find files' })
+      vim.keymap.set('n', '<leader>fg', ':Telescope live_grep<CR>', { desc = 'Live grep' })
+      vim.keymap.set('n', '<leader>fb', ':Telescope buffers<CR>', { desc = 'Buffers' })
+      vim.keymap.set('n', '<leader>fh', ':Telescope help_tags<CR>', { desc = 'Help tags' })
+      vim.keymap.set('n', '<leader>fr', ':Telescope oldfiles<CR>', { desc = 'Recent files' })
+      vim.keymap.set('n', '<leader>fw', ':Telescope grep_string<CR>', { desc = 'Grep word under cursor' })
+      vim.keymap.set('n', '<leader>fd', ':Telescope diagnostics<CR>', { desc = 'Diagnostics' })
+      vim.keymap.set('n', '<leader>fc', ':Telescope git_commits<CR>', { desc = 'Git commits' })
+      vim.keymap.set('n', '<leader>fs', ':Telescope git_status<CR>', { desc = 'Git status' })
+    end
   }
+  -- use {
+  --   'CopilotC-Nvim/CopilotChat.nvim',
+  --   branch = 'main',
+  --   dependencies = {
+  --     'github/copilot.vim',
+  --     'nvim-lua/plenary.nvim',
+  --     'nvim-telescope/telescope.nvim',
+  --   },
+  --   config = function()
+  --     require('CopilotChat').setup {
+  --       window = {
+  --         layout = 'vertical',
+  --         width = 0.35,
+  --         border = 'single',
+  --       },
+  --       auto_follow_cursor = false,
+  --     }
+  --
+  --     vim.api.nvim_set_keymap('n', '<leader>cc', ':CopilotChat<CR>', { noremap = true, silent = true, desc = 'Open Copilot Chat' })
+  --     vim.api.nvim_set_keymap('n', '<leader>ce', ':CopilotChatExplain<CR>', { noremap = true, silent = true, desc = 'Explain selected code' })
+  --     vim.api.nvim_set_keymap('n', '<leader>cr', ':CopilotChatReview<CR>', { noremap = true, silent = true, desc = 'Review selected code' })
+  --   end,
+  -- }
 
   -- Treesitter
   use {
@@ -102,7 +115,33 @@ require('packer').startup(function(use)
   use {
     'lewis6991/gitsigns.nvim',
     config = function()
-        require('gitsigns').setup()
+      require('gitsigns').setup({
+        on_attach = function(bufnr)
+          local gs = package.loaded.gitsigns
+          local function opts(desc)
+            return { buffer = bufnr, desc = desc }
+          end
+
+          vim.keymap.set('n', ']h', gs.next_hunk, opts('Next hunk'))
+          vim.keymap.set('n', '[h', gs.prev_hunk, opts('Previous hunk'))
+
+          vim.keymap.set('n', '<leader>hs', gs.stage_hunk, opts('Stage hunk'))
+          vim.keymap.set('n', '<leader>hr', gs.reset_hunk, opts('Reset hunk'))
+          vim.keymap.set('v', '<leader>hs', function() gs.stage_hunk({ vim.fn.line('.'), vim.fn.line('v') }) end, opts('Stage selected hunk'))
+          vim.keymap.set('v', '<leader>hr', function() gs.reset_hunk({ vim.fn.line('.'), vim.fn.line('v') }) end, opts('Reset selected hunk'))
+          vim.keymap.set('n', '<leader>hu', gs.undo_stage_hunk, opts('Undo stage hunk'))
+          vim.keymap.set('n', '<leader>hS', gs.stage_buffer, opts('Stage entire buffer'))
+          vim.keymap.set('n', '<leader>hR', gs.reset_buffer, opts('Reset entire buffer'))
+
+          vim.keymap.set('n', '<leader>hp', gs.preview_hunk, opts('Preview hunk'))
+          vim.keymap.set('n', '<leader>hb', gs.blame_line, opts('Blame line'))
+          vim.keymap.set('n', '<leader>hB', function() gs.blame_line({ full = true }) end, opts('Blame line (full)'))
+
+          vim.keymap.set('n', '<leader>hd', gs.diffthis, opts('Diff against index'))
+          vim.keymap.set('n', '<leader>htb', gs.toggle_current_line_blame, opts('Toggle line blame'))
+          vim.keymap.set('n', '<leader>htd', gs.toggle_deleted, opts('Toggle show deleted'))
+        end
+      })
     end
   }
 

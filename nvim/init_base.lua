@@ -1,5 +1,8 @@
 
 
+-- Disable Copilot on startup. To re-enable: :Copilot enable (or comment this line out)
+vim.g.copilot_enabled = false
+
 -- Searching
 vim.o.ignorecase  = true           -- case insensitive 
 vim.o.smartcase   = true           -- requires ignorecase, but capitals in searchs are not ignored
@@ -12,6 +15,10 @@ vim.o.autoindent  = true           -- indent a new line the same amount as the l
 vim.o.expandtab   = true           -- converts tabs to white space
 vim.o.shiftwidth  = 4              -- uses 4 spaces for a tab, used for auto indenting
 vim.o.tabstop     = 4              -- uses 4 spaces for a tab, used when hitting tab key explicitly
+
+
+-- Wrapping
+vim.o.textwidth   = 80             -- wrap text at 80 columns
 
 
 -- Static Appearance
