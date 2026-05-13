@@ -4,6 +4,7 @@
 [alias]
         lol = log --graph --decorate --pretty=oneline --abbrev-commit
         lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+        delta = "!git diff --color=always \"$@\" | delta --side-by-side #"
 [color]
         branch = auto
         diff = auto
