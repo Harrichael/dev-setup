@@ -17,6 +17,10 @@ vim.o.shiftwidth  = 4              -- uses 4 spaces for a tab, used for auto ind
 vim.o.tabstop     = 4              -- uses 4 spaces for a tab, used when hitting tab key explicitly
 
 
+-- Wrapping
+vim.o.textwidth   = 80             -- wrap text at 80 columns
+
+
 -- Static Appearance
 vim.o.number      = true           -- add line numbers
 vim.o.cursorline  = true           -- highlight current cursorline

@@ -42,6 +42,7 @@ source <PATH_TO_USER_DIR>/dev-setup/rc.local
 ```
 local home_dir = os.getenv("HOME")
 package.path = ";" .. home_dir .. "/dev-setup/nvim/" .. package.path
+vim.opt.runtimepath:append(home_dir .. "/dev-setup/nvim")
 require("plugins_base")
 require("init_base")
 ```
