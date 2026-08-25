@@ -302,6 +302,28 @@ can't claim a deploy that didn't happen. Whether the *deployed artifact* came
 from this checkout is the installer's business, not dev-setup's — Gnomon answers
 it in `~/.claude/gnomon.provenance`.
 
+**One report for everything.** Every install writes
+`${XDG_STATE_HOME:-~/.local/state}/dev-setup/provenance`, listing dev-setup
+itself and each tool with its source checkout, commit and dirty flag:
+
+```
+dev-setup  /Users/you/psrc/dev-setup                          c8898fc  DIRTY
+Choros     /Users/you/.local/share/dev-setup/tools/Choros     1fbb763  clean
+LatticeQL  /Users/you/.local/share/dev-setup/tools/LatticeQL  ce1ba63  clean
+Gnomon     /Users/you/.local/share/dev-setup/tools/Gnomon     987a119  clean
+```
+
+It exists because the underlying records live in three different places — cargo
+in `~/.cargo/.crates.toml`, script tools in whatever their own installer writes,
+and dev-setup only implicitly, in the paths embedded in the dotfiles it wired.
+That answers "which checkout is live?" only if you already know where to look for
+each one. This is a **report, not state**: nothing reads it back and deleting it
+breaks nothing. It's tab-separated so it stays greppable.
+
+dev-setup's own row matters most, because it's the checkout the dotfiles point at
+by reference. If another checkout of it exists, the report names it and says
+nothing points at it.
+
 **Overriding the location.** Two environment variables, both optional:
 
 | Variable | Effect |

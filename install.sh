@@ -654,6 +654,7 @@ install_tools() {
   fi
 
   mkdir -p "$base"
+  TOOLS_BASE="$base"
 
   local line name url kind bin dest oldifs
   oldifs="$IFS"; IFS=$'\n'
@@ -753,9 +754,67 @@ register_dev_sources() {
   IFS="$oldifs"
 }
 
+# Every component now records where it came from, but in three different places:
+# cargo tools in ~/.cargo/.crates.toml, script tools in whatever their own
+# installer writes, and dev-setup itself only implicitly, in the paths embedded
+# in the dotfiles it wired. That is enough to answer "which checkout is live?"
+# only if you already know where to look for each one.
+#
+# So write one file that answers it for everything, dev-setup included. It is a
+# report, not state: nothing reads it back, and deleting it breaks nothing.
+record_provenance() {
+  local out="$STAMP_DIR/provenance" line name dest head dirty
+  mkdir -p "$STAMP_DIR"
+
+  {
+    echo "# Written by dev-setup install.sh. A report, not state."
+    echo "# component  source-checkout  commit  dirty"
+    echo
+
+    head="$(git -C "$REPO_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    dirty=clean
+    [ -n "$(git -C "$REPO_DIR" status --porcelain 2>/dev/null)" ] && dirty=DIRTY
+    printf 'dev-setup\t%s\t%s\t%s\n' "$REPO_DIR" "$head" "$dirty"
+
+    [ -n "${TOOLS_BASE:-}" ] || return 0
+    local oldifs; oldifs="$IFS"; IFS=$'\n'
+    for line in $TOOLS; do
+      IFS="$oldifs"
+      name="$(printf '%s' "$line" | cut -d'|' -f1)"
+      dest="$TOOLS_BASE/$name"
+      if [ -d "$dest/.git" ]; then
+        head="$(git -C "$dest" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+        dirty=clean
+        [ -n "$(git -C "$dest" status --porcelain 2>/dev/null)" ] && dirty=DIRTY
+        printf '%s\t%s\t%s\t%s\n' "$name" "$dest" "$head" "$dirty"
+      fi
+      IFS=$'\n'
+    done
+    IFS="$oldifs"
+  } > "$out"
+
+  echo "==> provenance"
+  # The file is tab-separated so it stays greppable; align it only for display.
+  grep -v -e '^#' -e '^[[:space:]]*$' "$out" \
+    | { command -v column >/dev/null 2>&1 && column -t -s "$(printf '\t')" || cat; } \
+    | sed 's/^/    /'
+  echo "    (written to $out)"
+
+  # dev-setup gets the same courtesy the tools get: name any other checkout of
+  # itself, since the dotfiles point at exactly one and the others are inert.
+  local root other
+  for root in $(discover_choros_roots); do
+    other="$(registry_of "$root")/$(basename "$REPO_DIR")"
+    [ "$other" = "$REPO_DIR" ] && continue
+    [ -d "$other/.git" ] || continue
+    echo "    note: another dev-setup checkout exists at $other (nothing points at it)"
+  done
+}
+
 # -------------------------------------------------------------------- main ---
 
 WORKSPACES=""
+TOOLS_BASE=""
 
 install_packages
 echo
@@ -769,6 +828,8 @@ wire_nvim
 echo
 setup_node
 setup_nvim_plugins
+echo
+record_provenance
 
 echo
 echo "Done. Open a new shell (or: exec \$SHELL -l)."
