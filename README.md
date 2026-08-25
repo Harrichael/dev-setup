@@ -120,7 +120,7 @@ re-run with everything installed takes about a second.
 | --- | --- |
 | Packages | macOS: `brew bundle`. Linux: prints the list to install yourself. |
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, and sets a per-workspace git identity. |
-| Choros | Interactive, defaults to yes. Clones/updates [Choros](https://github.com/Harrichael/Choros) into a workspace registry and `cargo install --path` it. Installs Rust via rustup first if needed. |
+| Tools | Interactive, defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into a workspace registry and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
 | Relocate | Interactive. Moves this repo into a workspace registry. Runs before the dotfile wiring, so paths are recorded once. |
 | Dotfiles | Wires `~/.zshrc` or `~/.bashrc`, `~/.gitconfig`, and `~/.config/nvim/init.lua`, creating each if absent. |
 | Node | `fnm install --lts` + `fnm default lts-latest`, only if no version exists. fnm ships no Node of its own, so `node`/`npx` — and the `nx` aliases — don't work until this runs. |
@@ -237,16 +237,47 @@ with the final path. There is no second pass, and no window where a dotfile
 points at a directory that no longer exists. Re-running afterwards reports
 `already at` and changes nothing.
 
-**Choros itself** is installed with `cargo install --path`, which puts the binary
-in `~/.cargo/bin` — already on `PATH` in both shell configs, unlike the
-`~/.local/bin` default of Choros's own installer. It's cloned as an ordinary
-repo, not a submodule: it's a tool dependency you also develop, so pinning it to
-a dev-setup commit would just add friction. `bashrc` and `zshrc` already contain
-the `eval "$(choros shell-init)"` hook, guarded so a machine without choros
-starts cleanly.
+---
 
-Choros is written in Rust. If `cargo` is missing, setup offers to install rustup,
-which lands in `~/.cargo/bin` — the path these shell configs already export.
+## Tools
+
+`install.sh` clones and installs a set of tools into a workspace registry, so a
+choros can also clone them like any other repo. All are repos you own and
+update; each is a plain clone, not a submodule — they're tool dependencies you
+also develop, and pinning them to a dev-setup commit would only add friction.
+
+| Tool | Kind | Installed as |
+| --- | --- | --- |
+| [Choros](https://github.com/Harrichael/Choros) | Rust | `cargo install --path` → `~/.cargo/bin/choros` |
+| [LatticeQL](https://github.com/Harrichael/LatticeQL) | Rust | `cargo install --path` → `~/.cargo/bin/latticeql` |
+| [Gnomon](https://github.com/Harrichael/Gnomon) | Python | delegates to the repo's own `install.sh` |
+
+`~/.cargo/bin` is already on `PATH` in both shell configs, which is why it's
+preferred over the `~/.local/bin` that some of these installers default to. If
+`cargo` is missing, setup offers to install rustup — which also lands in
+`~/.cargo/bin`.
+
+**Rust builds are stamped.** `cargo install` re-links on every invocation, and
+these packages don't bump their version between commits, so cargo can neither
+skip reliably nor notice that the code changed. The commit each tool was built
+from is recorded under `${XDG_STATE_HOME:-~/.local/state}/dev-setup/`, and a
+rebuild happens only when `HEAD` differs. A re-run with nothing to do prints
+`already built at <sha>` and does no work. A cold build takes minutes.
+
+**Gnomon is the exception to wiring by reference.** Its installer deliberately
+deploys a *copy* to `~/.claude/gnomon.py` and pins `statusLine` at that path, so
+that something executing on every keystroke can't be broken by a half-saved file
+in a checkout. Wiring it by reference instead would be silently reverted the next
+time its installer ran. So dev-setup delegates to it, and because that happens on
+every pass, a pull here is also a redeploy — `git pull` alone is *not* enough for
+Gnomon, unlike everything else in this repo.
+
+That installer merges into `~/.claude/settings.json` rather than overwriting it,
+and is all-or-nothing: on malformed JSON it deploys nothing, changes nothing, and
+exits non-zero. dev-setup surfaces that failure rather than swallowing it.
+
+`bashrc` and `zshrc` already contain the `eval "$(choros shell-init)"` hook,
+guarded so a machine without choros starts cleanly.
 
 ---
 

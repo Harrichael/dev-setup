@@ -463,8 +463,6 @@ setup_workspaces() {
   done
 }
 
-# ------------------------------------------------------------------- choros ---
-
 # Choros roots to offer: ones created this run, any directly under $HOME, and
 # any ancestor of this repo. Deduplicated.
 discover_choros_roots() {
@@ -491,40 +489,128 @@ choose_registry() {
   printf '%s' "$(registry_of "$root")"
 }
 
-install_choros() {
-  echo "==> choros"
+# -------------------------------------------------------------------- tools ---
+
+# name|clone-url|kind|binary
+#   cargo  -- cargo install --path, so the binary lands in ~/.cargo/bin, which
+#             both shell configs already put on PATH
+#   script -- run the repo's own install.sh and let it decide what to do.
+#             Gnomon deliberately deploys a copy to ~/.claude and pins
+#             statusLine at it, so wiring it by reference instead would be
+#             silently reverted by its next install. Since this runs its
+#             installer on every pass, a pull here is a redeploy anyway.
+TOOLS="Choros|git@github.com:Harrichael/Choros.git|cargo|choros
+LatticeQL|git@github.com:Harrichael/LatticeQL.git|cargo|latticeql
+Gnomon|git@github.com:Harrichael/Gnomon.git|script|"
+
+# Records the commit each tool was last built from. `cargo install` re-links on
+# every invocation otherwise, and these packages do not bump their version
+# between commits, so cargo alone can neither skip reliably nor detect changes.
+STAMP_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dev-setup"
+
+clone_or_pull() {
+  local url="$1" dest="$2"
+  if [ -d "$dest/.git" ]; then
+    if git -C "$dest" pull --ff-only --quiet 2>/dev/null; then
+      echo "      pulled: $dest"
+    else
+      echo "      !! pull failed (local commits or dirty tree?), using as-is"
+    fi
+  else
+    if git clone --quiet "$url" "$dest"; then
+      echo "      cloned: $dest"
+    else
+      echo "      !! clone failed, skipped"
+      rm -rf "$dest"
+      return 1
+    fi
+  fi
+}
+
+build_cargo_tool() {
+  local name="$1" dest="$2" bin="$3"
+  local stamp="$STAMP_DIR/$name.sha" head installed=""
+
+  ensure_rust || { echo "      !! cargo unavailable, not built"; return 0; }
+
+  head="$(git -C "$dest" rev-parse HEAD 2>/dev/null || echo unknown)"
+  [ -f "$stamp" ] && installed="$(cat "$stamp")"
+
+  if [ "$installed" = "$head" ] && command -v "$bin" >/dev/null 2>&1; then
+    echo "      already built at ${head%"${head#???????}"}"
+    return 0
+  fi
+
+  echo "      building (a cold build can take several minutes)"
+  if cargo install --path "$dest" --force >/dev/null 2>&1; then
+    mkdir -p "$STAMP_DIR"
+    printf '%s\n' "$head" > "$stamp"
+    echo "      installed: $(command -v "$bin" 2>/dev/null || echo "$bin")"
+  else
+    echo "      !! build failed. Run for the error:"
+    echo "         cargo install --path $dest --force"
+  fi
+}
+
+run_tool_installer() {
+  local name="$1" dest="$2"
+  if [ ! -x "$dest/install.sh" ]; then
+    echo "      !! no executable install.sh, skipped"
+    return 0
+  fi
+  # Its own installer owns the deployment decisions; do not second-guess them.
+  # Capture first and print after, so the exit status is the installer's and not
+  # sed's -- a failing installer must be surfaced, never swallowed. Gnomon for
+  # instance exits 1 on a malformed ~/.claude/settings.json and deploys nothing.
+  local out status
+  out="$( cd "$dest" && ./install.sh 2>&1 )" && status=0 || status=$?
+  [ -n "$out" ] && printf '%s\n' "$out" | sed 's/^/      /'
+  if [ "$status" -ne 0 ]; then
+    echo "      !! $name install.sh failed (exit $status) -- nothing was deployed"
+  fi
+}
+
+install_tools() {
+  echo "==> tools"
   if ! interactive; then
     skip_reason
     return 0
   fi
-  if ! ask_yn "    Install/update choros?" y; then
+  if ! ask_yn "    Install/update tools (choros, latticeql, gnomon)?" y; then
     echo "    skipped"
     return 0
   fi
 
-  local reg dest
-  reg="$(choose_registry "Which workspace registry should hold the choros clone?" \
-                         "clone it beside dev-setup instead")"
+  local reg base
+  reg="$(choose_registry "Which workspace registry should hold the tool clones?" \
+                         "clone them beside dev-setup instead")"
   if [ -n "$reg" ]; then
     mkdir -p "$reg"
-    dest="$reg/Choros"
+    base="$reg"
   else
-    dest="$(dirname "$REPO_DIR")/Choros"
+    base="$(dirname "$REPO_DIR")"
   fi
 
-  if [ -d "$dest/.git" ]; then
-    echo "    updating $dest"
-    git -C "$dest" pull --ff-only || echo "    !! pull failed, using the existing checkout"
-  else
-    echo "    cloning into $dest"
-    git clone "$CHOROS_URL" "$dest"
-  fi
+  local line name url kind bin dest oldifs
+  oldifs="$IFS"; IFS=$'\n'
+  for line in $TOOLS; do
+    IFS="$oldifs"
+    name="$(printf '%s' "$line" | cut -d'|' -f1)"
+    url="$(printf '%s' "$line" | cut -d'|' -f2)"
+    kind="$(printf '%s' "$line" | cut -d'|' -f3)"
+    bin="$(printf '%s' "$line" | cut -d'|' -f4)"
+    dest="$base/$name"
 
-  ensure_rust || return 0
-  echo "    cargo install --path $dest"
-  # Lands in ~/.cargo/bin, which bashrc/zshrc already put on PATH -- unlike
-  # choros's own install.sh default of ~/.local/bin.
-  cargo install --path "$dest"
+    echo "    --- $name"
+    if clone_or_pull "$url" "$dest"; then
+      case "$kind" in
+        cargo)  build_cargo_tool "$name" "$dest" "$bin" ;;
+        script) run_tool_installer "$name" "$dest" ;;
+      esac
+    fi
+    IFS=$'\n'
+  done
+  IFS="$oldifs"
 }
 
 # ------------------------------------------------------- relocate dev-setup ---
@@ -576,7 +662,7 @@ echo
 # Workspaces and the move come first, so that dotfile wiring below records the
 # final dev-setup location in one pass.
 setup_workspaces
-install_choros
+install_tools
 relocate_self
 echo
 wire_shell
