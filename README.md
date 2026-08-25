@@ -438,7 +438,13 @@ non-native tab options are Linux-only.
 **The keybindings can't be shared across platforms.** `cmd` doesn't exist on
 Linux, and `ctrl+shift+1..9` is already `first_window`/`second_window`/… there
 for splits within a tab. So tab jumping is `cmd+1..9` on macOS and
-`ctrl+alt+1..9` on Linux. `cmd+9` / `ctrl+alt+9` go to the *last* tab rather
+`ctrl+alt+1..9` on Linux.
+
+Note what that costs on macOS: kitty binds `cmd+1..9` by default to
+`first_window`…`ninth_window`, which jumps between *splits* inside a tab.
+Repointing them at tabs leaves split-by-number unbound — splits are still
+reachable with `cmd+opt+arrows`. Linux keeps its split bindings, since
+`ctrl+alt` was free. `cmd+9` / `ctrl+alt+9` go to the *last* tab rather
 than the ninth, matching Ghostty. `cmd+shift+p` (`ctrl+alt+p`) opens a fuzzy tab
 picker.
 
