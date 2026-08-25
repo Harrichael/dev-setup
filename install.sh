@@ -362,6 +362,21 @@ ensure_rust() {
 install_self() {
   echo "==> dev-setup source"
 
+  # Running from the pristine checkout itself -- the normal case once you have
+  # no development clone, since this is the only install.sh left on the machine.
+  # It still has to pull, or `./install.sh` from here could never update itself.
+  if [ -z "${DEV_SETUP_SELF_DIR:-}" ] && [ "$SELF_DIR" = "$REPO_DIR" ]; then
+    local self_url
+    self_url="$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || echo "")"
+    if [ -n "$self_url" ]; then
+      clone_or_pull "$self_url" "$SELF_DIR" || true
+    fi
+    WIRE_DIR="$SELF_DIR"
+    return 0
+  fi
+
+  # DEV_SETUP_SELF_DIR names this clone, so it is a working copy being iterated
+  # on. Never pull it -- that is the user's tree to manage.
   if [ "$SELF_DIR" = "$REPO_DIR" ]; then
     echo "    wiring this clone directly: $REPO_DIR"
     echo "    (DEV_SETUP_SELF_DIR points here; edits go live immediately)"
