@@ -91,9 +91,12 @@ _block_set() {
 # Lua), so the sentinels are always valid syntax for the file they live in.
 # conflict-needle detects a pre-existing hand-wired reference that predates the
 # sentinels -- appending on top of one would double-source, so we stop instead.
+# cs is a closing comment delimiter, for formats that have no line comment at
+# all -- markdown needs "<!-- ... -->" or the sentinel swallows the rest of the
+# file. Empty for shell, gitconfig and Lua.
 wire_block() {
-  local file="$1" cp="$2" payload="$3" needle="$4" label="${5:-dev-setup}"
-  local begin="$cp >>> $label >>>" end="$cp <<< $label <<<"
+  local file="$1" cp="$2" payload="$3" needle="$4" label="${5:-dev-setup}" cs="${6:-}"
+  local begin="$cp >>> $label >>>${cs:+ $cs}" end="$cp <<< $label <<<${cs:+ $cs}"
 
   mkdir -p "$(dirname "$file")"
   [ -f "$file" ] || : > "$file"
@@ -393,6 +396,20 @@ install_self() {
     echo "          Those are NOT what is wired. Push them and re-run, or set"
     echo "          DEV_SETUP_SELF_DIR=$REPO_DIR to wire this clone while iterating."
   fi
+}
+
+# Claude Code reads ~/.claude/CLAUDE.md as global instructions. Wire it by
+# reference like every other dotfile, using CLAUDE.md's own @import syntax, so
+# the content is version-controlled here and a pull updates it.
+#
+# The file lives at claude/CLAUDE.md rather than the repo root on purpose: a root
+# CLAUDE.md would also be picked up as dev-setup's *project* instructions, so
+# global rules would apply twice here and anything repo-specific would leak into
+# every other project.
+wire_claude() {
+  echo "==> claude global instructions"
+  wire_block "$HOME/.claude/CLAUDE.md" "<!--" "@$WIRE_DIR/claude/CLAUDE.md" \
+             "$WIRE_DIR/claude/CLAUDE.md" "dev-setup" "-->"
 }
 
 # ---------------------------------------------------------------- workspaces ---
@@ -911,6 +928,7 @@ echo
 wire_shell
 wire_gitconfig
 wire_nvim
+wire_claude
 echo
 setup_node
 setup_nvim_plugins
