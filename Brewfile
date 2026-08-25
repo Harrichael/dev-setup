@@ -9,3 +9,7 @@ brew "git-delta" # required by the `git delta` alias in gitconfig
 brew "fnm"       # node version manager, wired up in bashrc/zshrc
 brew "tree"      # required by the `gtree` alias
 brew "ripgrep"
+
+cask "kitty"                          # terminal; draws its own tab bar, so a
+                                      # tiling WM sees one window, not one per tab
+cask "font-jetbrains-mono-nerd-font"  # kitty/kitty.conf asks for "JetBrainsMono NFM"

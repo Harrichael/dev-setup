@@ -73,7 +73,7 @@ Shell config is `bashrc`.
 install them for you:
 
 ```
-sudo apt install neovim git tree ripgrep
+sudo apt install neovim git tree ripgrep kitty fonts-jetbrains-mono
 
 # git-delta: https://github.com/dandavison/delta/releases
 # fnm:
@@ -82,6 +82,13 @@ curl -fsSL https://fnm.vercel.app/install | bash
 
 If `nvim` is too old, see [troubleshooting.md](troubleshooting.md) — some distros
 don't package a current build.
+
+`fonts-jetbrains-mono` is the plain font, **not** the Nerd Font patch that
+`kitty/kitty.conf` asks for by the family name `JetBrainsMono NFM`. Either grab
+the patched build from
+[nerd-fonts releases](https://github.com/ryanoasis/nerd-fonts/releases) into
+`~/.local/share/fonts` and run `fc-cache -f`, or change `font_family` to
+`JetBrains Mono` and lose the glyphs.
 
 **2. Add an ssh key to your GitHub account**
 ([guide](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)),
@@ -127,6 +134,7 @@ re-run with everything installed takes about a second.
 | Packages | macOS: `brew bundle`. Linux: prints the list to install yourself. |
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, and sets a per-workspace git identity. |
 | Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.local/share/dev-setup/tools/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
+| kitty | Wires `~/.config/kitty/kitty.conf` to include this repo's shared + per-OS kitty config. |
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
 | dev-setup source | Pulls the pristine checkout the dotfiles point at, into `~/.local/share/dev-setup/self`. Runs before wiring so paths are recorded once. |
 | Development clones | Interactive, optional. Clones dev-setup and the tool repos into a workspace registry so a choros can hack on them. Nothing is installed from these. |
@@ -403,6 +411,43 @@ exits non-zero. dev-setup surfaces that failure rather than swallowing it.
 
 `bashrc` and `zshrc` already contain the `eval "$(choros shell-init)"` hook,
 guarded so a machine without choros starts cleanly.
+
+---
+
+## Terminal
+
+`install.sh` wires `~/.config/kitty/kitty.conf` to `include` two files from this
+repo: `kitty/kitty.conf` for font, colors and the tab bar, and
+`kitty/macos.conf` or `kitty/linux.conf` for window chrome and tab keys.
+
+**Why kitty and not Ghostty or Alacritty.** Both of those use native macOS
+`NSWindow` tabs, which means each tab genuinely *is* a window. A tiling window
+manager therefore tiles every tab as its own node and re-tiles the workspace on
+every tab switch. Measured with three tabs open:
+
+| Terminal | Windows AeroSpace sees | Native-tab selectors in the binary |
+| --- | --- | --- |
+| Ghostty | 3 | 4 |
+| Alacritty | — | 8 |
+| kitty | 1 | 0 |
+
+kitty draws its own tab bar inside one window, so tab switching is invisible to
+the window manager. There is no Ghostty setting that changes this — its
+non-native tab options are Linux-only.
+
+**The keybindings can't be shared across platforms.** `cmd` doesn't exist on
+Linux, and `ctrl+shift+1..9` is already `first_window`/`second_window`/… there
+for splits within a tab. So tab jumping is `cmd+1..9` on macOS and
+`ctrl+alt+1..9` on Linux. `cmd+9` / `ctrl+alt+9` go to the *last* tab rather
+than the ninth, matching Ghostty. `cmd+shift+p` (`ctrl+alt+p`) opens a fuzzy tab
+picker.
+
+**Appearance notes.** The font is JetBrains Mono Nerd Font — specifically the
+`NFM` (cell-width) variant, so icons can't overflow a cell and shove the line.
+Colors are One Dark; Ghostty's own defaults pair One Dark's background
+(`#282c34`) with a Tomorrow Night ANSI palette, which is a mismatch worth not
+reproducing. `ctrl+cmd+,` reloads the config in place, `cmd+,` edits it, and
+`opt+cmd+,` dumps what actually got resolved.
 
 ---
 

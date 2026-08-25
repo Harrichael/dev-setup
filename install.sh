@@ -77,7 +77,7 @@ install_packages() {
   else
     echo "==> Linux: dotfiles will still be wired below, but install these"
     echo "    packages yourself:"
-    echo "    sudo apt install neovim git tree ripgrep"
+    echo "    sudo apt install neovim git tree ripgrep kitty fonts-jetbrains-mono"
     echo "    git-delta: https://github.com/dandavison/delta/releases"
     echo "    fnm:       curl -fsSL https://fnm.vercel.app/install | bash"
   fi
@@ -440,6 +440,19 @@ install_self() {
     echo "          Those are NOT what is wired. Push them and re-run, or set"
     echo "          DEV_SETUP_SELF_DIR=$REPO_DIR to wire this clone while iterating."
   fi
+}
+
+# kitty reads ~/.config/kitty/kitty.conf and supports `include`, so the same
+# by-reference wiring works. Two includes rather than one: the shared file holds
+# font, colors and the tab bar, and the per-OS file holds window chrome and the
+# tab keybindings, which cannot be shared (cmd does not exist on Linux, and
+# ctrl+shift+N is already taken there by kitty's own split navigation).
+wire_kitty() {
+  echo "==> kitty"
+  wire_block "$HOME/.config/kitty/kitty.conf" "#" \
+             "include $WIRE_DIR/kitty/kitty.conf
+include $WIRE_DIR/kitty/$OS.conf" \
+             "$WIRE_DIR/kitty/kitty.conf"
 }
 
 # Claude Code reads ~/.claude/CLAUDE.md as global instructions. Wire it by
@@ -985,6 +998,7 @@ echo
 wire_shell
 wire_gitconfig
 wire_nvim
+wire_kitty
 wire_claude
 echo
 setup_node
