@@ -566,7 +566,7 @@ choose_registry() {
 #             silently reverted by its next install. Since this runs its
 #             installer on every pass, a pull here is a redeploy anyway.
 TOOLS="Choros|git@github.com:Harrichael/Choros.git|cargo|choros
-LatticeQL|git@github.com:Harrichael/LatticeQL.git|cargo|latticeql
+LatticeQL|git@github.com:Harrichael/LatticeQL.git|cargo|lql
 Gnomon|git@github.com:Harrichael/Gnomon.git|script|"
 
 # Records the commit each tool was last built from. `cargo install` re-links on
@@ -622,6 +622,24 @@ cargo_installed_from() {
   grep -qF "(path+file://$dest)" "$crates"
 }
 
+# If a tool renames its binary, cargo installs the new name and leaves the old
+# one in place -- a stale artifact built from an older commit, with nothing left
+# that will ever update it. Cargo knows which binaries belong to the package, so
+# ask it rather than guessing from the package name.
+warn_extra_binaries() {
+  local dest="$1" expected="$2" other
+  command -v cargo >/dev/null 2>&1 || return 0
+  for other in $(cargo install --list 2>/dev/null | awk -v d="($dest)" '
+        /^[^[:space:]]/ { inblock = (index($0, d) > 0); next }
+        inblock && /^[[:space:]]/ { print $1 }
+      '); do
+    [ "$other" = "$expected" ] && continue
+    echo "      note: this package also installed [$other] -- probably a renamed"
+    echo "            binary left behind. Remove both and reinstall:"
+    echo "            cargo uninstall $(basename "$dest" | tr "[:upper:]" "[:lower:]") && ./install.sh"
+  done
+}
+
 build_cargo_tool() {
   local name="$1" dest="$2" bin="$3"
   local stamp="$STAMP_DIR/$name.sha" head installed=""
@@ -648,6 +666,7 @@ build_cargo_tool() {
     mkdir -p "$STAMP_DIR"
     printf '%s\n' "$head" > "$stamp"
     echo "      installed: $(command -v "$bin" 2>/dev/null || echo "$bin")"
+    warn_extra_binaries "$dest" "$bin"
   else
     echo "      !! build failed. Run for the error:"
     echo "         cargo install --path $dest --force"

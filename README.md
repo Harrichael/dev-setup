@@ -46,6 +46,11 @@ cd dev-setup
 ./install.sh
 ```
 
+Clone it wherever you like. `install.sh` pulls its own pristine checkout to
+`~/.local/share/dev-setup/self` and wires the dotfiles *there*, so this clone
+carries no special status — keep it to develop the config in, or delete it. See
+[How the wiring works](#how-the-wiring-works).
+
 **5. Open a new shell** — `exec zsh -l`, or just a new terminal tab.
 
 **6. Set your git identity.** `gitconfig` deliberately pins no name or email, so
@@ -94,10 +99,11 @@ cd dev-setup
 
 **5. Set your git identity** (see step 6 in the macOS section above).
 
-**Optional — root shell.** Add to `/root/.bashrc`:
+**Optional — root shell.** Add to `/root/.bashrc`, pointing at the *wired*
+checkout (the path `install.sh` prints, not the clone you ran it from):
 
 ```
-source "<REPO_DIR>/bashrc"
+source "<SELF_DIR>/bashrc"
 ```
 
 **Optional — `rc.local`.** Linux-only and unused on macOS. `chmod +x
@@ -106,7 +112,7 @@ source "<REPO_DIR>/bashrc"
 ```
 #! /bin/sh
 
-source "<REPO_DIR>/rc.local"
+source "<SELF_DIR>/rc.local"
 ```
 
 ---
@@ -291,7 +297,7 @@ under `$XDG_STATE_HOME`.
 | Tool | Kind | Installed as |
 | --- | --- | --- |
 | [Choros](https://github.com/Harrichael/Choros) | Rust | `cargo install --path` → `~/.cargo/bin/choros` |
-| [LatticeQL](https://github.com/Harrichael/LatticeQL) | Rust | `cargo install --path` → `~/.cargo/bin/latticeql` |
+| [LatticeQL](https://github.com/Harrichael/LatticeQL) | Rust | `cargo install --path` → `~/.cargo/bin/lql` |
 | [Gnomon](https://github.com/Harrichael/Gnomon) | Python | delegates to the repo's own `install.sh` |
 
 `~/.cargo/bin` is already on `PATH` in both shell configs, which is why it's
@@ -401,24 +407,29 @@ them. `zshrc` also implements `alert` with `osascript` instead of `notify-send`.
 ## Dotfile Addendums
 
 These are what `install.sh` writes. Listed for reference, or if you'd rather wire
-things up by hand. Replace `<REPO_DIR>` with the path you cloned to.
+things up by hand.
+
+Replace `<SELF_DIR>` with the checkout you want these to read. `install.sh` uses
+a pristine one at `~/.local/share/dev-setup/self`; wiring by hand you can point
+at any clone, but be aware that whatever you name here is live — an unsaved edit
+or a WIP branch in it takes effect on the next shell.
 
 `~/.zshrc` (macOS)
 ```
 export BASE_PATH="$HOME"
-source "<REPO_DIR>/zshrc"
+source "<SELF_DIR>/zshrc"
 ```
 
 `~/.bashrc` (Linux)
 ```
 export BASE_PATH="$HOME"
-source "<REPO_DIR>/bashrc"
+source "<SELF_DIR>/bashrc"
 ```
 
 `~/.config/nvim/init.lua`
 ```
-package.path = ";<REPO_DIR>/nvim/?.lua;" .. package.path
-vim.opt.runtimepath:append("<REPO_DIR>/nvim")
+package.path = ";<SELF_DIR>/nvim/?.lua;" .. package.path
+vim.opt.runtimepath:append("<SELF_DIR>/nvim")
 require("plugins_base")
 require("init_base")
 ```
@@ -426,5 +437,5 @@ require("init_base")
 `~/.gitconfig`
 ```
 [include]
-        path = <REPO_DIR>/gitconfig
+        path = <SELF_DIR>/gitconfig
 ```
