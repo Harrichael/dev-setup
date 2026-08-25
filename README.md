@@ -121,6 +121,7 @@ re-run with everything installed takes about a second.
 | Packages | macOS: `brew bundle`. Linux: prints the list to install yourself. |
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, and sets a per-workspace git identity. |
 | Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.local/share/dev-setup/tools/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
+| dev-setup source | Pulls the pristine checkout the dotfiles point at, into `~/.local/share/dev-setup/self`. Runs before wiring so paths are recorded once. |
 | Development clones | Interactive, optional. Clones dev-setup and the tool repos into a workspace registry so a choros can hack on them. Nothing is installed from these. |
 | Dotfiles | Wires `~/.zshrc` or `~/.bashrc`, `~/.gitconfig`, and `~/.config/nvim/init.lua`, creating each if absent. |
 | Node | `fnm install --lts` + `fnm default lts-latest`, only if no version exists. fnm ships no Node of its own, so `node`/`npx` — and the `nx` aliases — don't work until this runs. |
@@ -144,22 +145,39 @@ when you save it, so that case is covered in the editor.
 ### How the wiring works
 
 Nothing is ever copied out of this repo. Each dotfile gets a small block that
-points back here:
+points at a checkout by reference:
 
 ```
 # >>> dev-setup >>>
 export BASE_PATH="$HOME"
-source "<REPO_DIR>/zshrc"
+source "<SELF_DIR>/zshrc"
 # <<< dev-setup <<<
 ```
 
-So `git pull` is the whole update procedure for anything in `bashrc`, `zshrc`,
-`gitconfig`, or `nvim/` — the next shell or nvim launch reads the new file. No
-reinstall needed.
+**Which checkout matters.** That path is *not* the clone you ran `install.sh`
+from. It's a pristine one at
+`${XDG_DATA_HOME:-~/.local/share}/dev-setup/self` that dev-setup pulls and never
+develops in.
 
-Re-run `./install.sh` only when a pull changes *dependencies* rather than config:
-a new `Brewfile` entry, a new plugin in `plugins_base.lua`, or a new treesitter
-parser in `ensure_installed`.
+The reason is that "by reference" cuts both ways. If the referenced checkout were
+the clone you develop in, then a half-saved `zshrc` edit, or a WIP branch you
+forgot you were on, would change every new shell the moment it happened — and
+`gitconfig` and nvim with it. That's the same hazard Gnomon avoids by deploying a
+copy rather than a symlink; it just happened to be less visible here.
+
+So the update procedure is **`./install.sh`**, which pulls that checkout and
+re-wires in one pass. A `git pull` in your own clone changes nothing that's live.
+That's the point: your working tree is yours to break.
+
+While you're actually iterating on the config, wire your clone directly:
+
+```
+DEV_SETUP_SELF_DIR=$PWD ./install.sh
+```
+
+The run says so out loud when you do. And if your clone is dirty or has unpushed
+commits, `install.sh` names them and warns that they are **not** what got wired —
+silently going live with the older tree would be the worst outcome.
 
 Idempotency keys off those sentinel comments, not off the text between them.
 Three consequences:
@@ -307,7 +325,8 @@ it in `~/.claude/gnomon.provenance`.
 itself and each tool with its source checkout, commit and dirty flag:
 
 ```
-dev-setup  /Users/you/psrc/dev-setup                          c8898fc  DIRTY
+dev-setup(wired)     /Users/you/.local/share/dev-setup/self        f738a01  clean
+dev-setup(ran from)  /Users/you/psrc/dev-setup                     f738a01  clean
 Choros     /Users/you/.local/share/dev-setup/tools/Choros     1fbb763  clean
 LatticeQL  /Users/you/.local/share/dev-setup/tools/LatticeQL  ce1ba63  clean
 Gnomon     /Users/you/.local/share/dev-setup/tools/Gnomon     987a119  clean
@@ -320,9 +339,10 @@ That answers "which checkout is live?" only if you already know where to look fo
 each one. This is a **report, not state**: nothing reads it back and deleting it
 breaks nothing. It's tab-separated so it stays greppable.
 
-dev-setup's own row matters most, because it's the checkout the dotfiles point at
-by reference. If another checkout of it exists, the report names it and says
-nothing points at it.
+`dev-setup(wired)` is the row that matters — it's what the dotfiles read.
+`dev-setup(ran from)` appears only when you invoked `install.sh` from a different
+clone, which is the normal case. If any other checkout of dev-setup exists, the
+report names it and says nothing points at it.
 
 **Overriding the location.** Two environment variables, both optional:
 
