@@ -281,7 +281,7 @@ preferred over the `~/.local/bin` that some of these installers default to. If
 `cargo` is missing, setup offers to install rustup — which also lands in
 `~/.cargo/bin`.
 
-**Rust builds are stamped.** `cargo install` re-links on every invocation, and
+**Every install is stamped, but only Rust builds are skipped.** `cargo install` re-links on every invocation, and
 these packages don't bump their version between commits, so cargo can neither
 skip reliably nor notice that the code changed. The commit each tool was built
 from is recorded under `${XDG_STATE_HOME:-~/.local/state}/dev-setup/`.
@@ -292,6 +292,15 @@ Otherwise a binary installed from a stray clone elsewhere would satisfy a
 commit-only check and never converge; it reports `re-installing: current binary
 was not built from this checkout`. A re-run with nothing to do prints
 `already built at <sha>`. A cold build takes minutes.
+
+Script tools (Gnomon) are stamped the same way, but the stamp is only a
+*record* — never a skip condition. Re-running their installer every pass is how
+they update, and in Gnomon's case it's also the smoke gate that stops a broken
+copy going live, so dev-setup always runs it again and just reports movement:
+`deployed 2d5a558 -> 987a119`. A failed installer is not stamped, so the record
+can't claim a deploy that didn't happen. Whether the *deployed artifact* came
+from this checkout is the installer's business, not dev-setup's — Gnomon answers
+it in `~/.claude/gnomon.provenance`.
 
 **Overriding the location.** Two environment variables, both optional:
 

@@ -614,7 +614,22 @@ run_tool_installer() {
   [ -n "$out" ] && printf '%s\n' "$out" | sed 's/^/      /'
   if [ "$status" -ne 0 ]; then
     echo "      !! $name install.sh failed (exit $status) -- nothing was deployed"
+    return 0
   fi
+
+  # Record what was deployed, the same as a cargo tool. This is a *record*, not
+  # a skip condition: re-running the installer every pass is the update path for
+  # these tools, and for Gnomon it is also the smoke gate that keeps a broken
+  # copy from going live. So stamp it and always run again next time.
+  local stamp head previous=""
+  stamp="$STAMP_DIR/$name.sha"
+  head="$(git -C "$dest" rev-parse HEAD 2>/dev/null || echo unknown)"
+  [ -f "$stamp" ] && previous="$(cat "$stamp")"
+  if [ -n "$previous" ] && [ "$previous" != "$head" ]; then
+    echo "      deployed ${previous%"${previous#???????}"} -> ${head%"${head#???????}"}"
+  fi
+  mkdir -p "$STAMP_DIR"
+  printf '%s\n' "$head" > "$stamp"
 }
 
 install_tools() {
