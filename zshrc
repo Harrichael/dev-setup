@@ -1,53 +1,49 @@
 
 if [[ -z "${BASE_PATH}" ]]; then
-  echo "Error: BASE_PATH is not defined. Please define it in your .bashrc file before sourcing this script."
+  echo "Error: BASE_PATH is not defined. Please define it in your .zshrc file before sourcing this script."
   return 1
 fi
 
 
-PS1='[\D{%T}] ${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]$(__git_ps1 " (git:%s)")\n\[\033[01;34m\]\w\[\033[00m\]\n\$ '
+# Prompt. Git branch comes from vcs_info (zsh builtin) rather than __git_ps1,
+# which would require sourcing git-prompt.sh from the Xcode toolchain.
+autoload -Uz vcs_info
+zstyle ':vcs_info:*' enable git
+zstyle ':vcs_info:git:*' formats ' (git:%b)'
+zstyle ':vcs_info:git:*' actionformats ' (git:%b|%a)'
+precmd_functions+=(vcs_info)
+setopt PROMPT_SUBST
+
+PROMPT='[%D{%T}] %F{green}%n@%m%f${vcs_info_msg_0_}
+%F{blue}%~%f
+%# '
 
 
-# don't put duplicate lines or lines starting with space in the history.
-HISTCONTROL=ignoreboth
-
+# History
+HISTFILE=~/.zsh_history
 HISTSIZE=1000
-HISTFILESIZE=100000
+SAVEHIST=100000
 
-# append to the history file, don't overwrite it
-shopt -s histappend
+setopt APPEND_HISTORY      # append to the history file, don't overwrite it
+setopt HIST_IGNORE_DUPS    # don't put duplicate lines in the history
+setopt HIST_IGNORE_SPACE   # don't put lines starting with a space in the history
 
-
-# Recheck winsize after each command
-shopt -s checkwinsize
+# zsh tracks window size natively, no checkwinsize equivalent needed.
 
 
 # Erlang shell History
 export ERL_AFLAGS="-kernel shell_history enabled"
 
 
-# TILIX setup
-if [ $TILIX_ID ] || [ $VTE_VERSION ]; then
-        [ -f /etc/profile.d/vte.sh ] && source /etc/profile.d/vte.sh
-fi
+# Completion
+autoload -Uz compinit && compinit
 
-
-# enable programmable completion features (you don't need to enable
-# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-# sources /etc/bash.bashrc).
-if ! shopt -oq posix; then
-  if [ -f /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-  elif [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-  fi
-fi
 
 alias ls='ls --color=auto'
-alias dir='dir --color=auto'
-alias vdir='vdir --color=auto'
 alias grep='grep --color=auto'
 alias cgrep='grep --color=always'
+
+# dir/vdir are GNU coreutils only and are deliberately absent here.
 
 alias ngrep='grep --exclude-dir=node_modules --exclude-dir=".nx" --exclude-dir=dist'
 alias ncgrep='grep --color=always --exclude-dir=node_modules --exclude-dir=dist'
@@ -121,17 +117,32 @@ ssgr() {
     ssg "$2" "$1"
 }
 
-[ -d /snap/bin ] && export PATH="/snap/bin:$PATH"
+# Homebrew's PATH is set up by ~/.zprofile via `brew shellenv`.
 export PATH="$HOME/.cargo/bin:$PATH"
 
-# Add an "alert" alias for long running commands.  Use like so:
+# Add an "alert" function for long running commands.  Use like so:
 #   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+# The notification text is passed through argv rather than interpolated into
+# the AppleScript source, so quotes in the previous command can't break it.
+alert() {
+    local rc=$?
+    local title
+    [ $rc = 0 ] && title="Terminal" || title="Error"
+
+    # $history[$HISTCMD] is the line being executed. `fc -ln -1` would give
+    # the PREVIOUS line, so `sleep 10; alert` would name the wrong command.
+    local last
+    last=$(print -r -- "${history[$HISTCMD]}" | sed -e 's/^[[:space:]]*//' -e 's/[;&|][[:space:]]*alert$//')
+    [ -z "$last" ] && last="command"
+
+    osascript -e 'on run argv
+        display notification (item 1 of argv) with title (item 2 of argv)
+    end run' "$last" "$title"
+}
 
 
 # FNM setup, see https://github.com/Schniz/fnm
-# Install: curl -fsSL https://fnm.vercel.app/install | bash
-# Delete the appended text from your .bashrc since we have it here.
+# Installed via the Brewfile on macOS.
 # The curl installer drops the fnm *binary* here, so it needs to go on PATH.
 # Homebrew puts fnm on PATH already, and this is then merely fnm's data dir
 # (aliases/, node-versions/) with no binaries -- so test for the binary, not
@@ -142,10 +153,9 @@ if [ -x "$FNM_PATH/fnm" ]; then
 fi
 
 if command -v fnm >/dev/null 2>&1; then
-  eval "$(fnm env --use-on-cd --shell bash)"
+  eval "$(fnm env --use-on-cd --shell zsh)"
 fi
 
 if command -v choros >/dev/null 2>&1; then
   eval "$(choros shell-init)"
 fi
-
