@@ -530,9 +530,14 @@ STAMP_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dev-setup"
 # evolves. It also put a second, identical-looking checkout of every tool on
 # disk, which is its own hazard.
 #
+# XDG_DATA_HOME is the portability seam, so there is no per-OS branch here: it
+# is honoured on both platforms, and macOS's ~/Library/Application Support
+# convention is for GUI apps, not CLI tools. This also pairs with STAMP_DIR
+# above, which is already XDG_STATE_HOME.
+#
 # Set DEV_SETUP_TOOLS_DIR to move it, or DEV_SETUP_TOOLS_REGISTRY to a workspace
 # root to go back to registry-hosted installs.
-TOOLS_DIR="${DEV_SETUP_TOOLS_DIR:-$HOME/.dev-setup/install}"
+TOOLS_DIR="${DEV_SETUP_TOOLS_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/dev-setup/tools}"
 
 clone_or_pull() {
   local url="$1" dest="$2"
@@ -658,10 +663,10 @@ install_tools() {
   IFS="$oldifs"
 }
 
-# Earlier versions installed these from a workspace registry. Those clones are
-# now inert -- nothing pulls or builds them -- and look identical to the live
-# checkout, so name them instead of leaving them to mislead. Deleting them is
-# the user's call; a registry entry may still be wanted as a clone source.
+# A registry copy of a tool may be a deliberate development clone (see
+# register_dev_sources) or leftover from when installs came from the registry.
+# Either way nothing installs from it, and it looks identical to the checkout
+# that does -- so name it rather than let it mislead. Never delete it here.
 report_stale_copies() {
   local name="$1" live="$2" root reg other
   for root in $(discover_choros_roots); do
@@ -669,7 +674,7 @@ report_stale_copies() {
     other="$reg/$name"
     [ "$other" = "$live" ] && continue
     [ -d "$other/.git" ] || continue
-    echo "      note: an unused copy remains at $other"
+    echo "      note: another checkout exists at $other (not installed from)"
   done
 }
 
@@ -677,40 +682,60 @@ report_stale_copies() {
 
 # Moving this repo means every wired path changes, so the move is the last thing
 # that happens and the script re-execs itself from the new location to re-wire.
-relocate_self() {
-  echo "==> dev-setup location"
+# dev-setup's authoritative location is wherever it was cloned -- for the same
+# reason the tools moved out of the registry: a registry holds clone sources,
+# not deploy state, and the dotfiles point at this checkout by reference.
+# (An earlier version moved this repo into a registry. That produced exactly the
+# hazard it was warned about: a second, identical-looking checkout that drifted
+# commits behind and got read as the live one.)
+#
+# What a registry IS good for is development: entries are what a new choros
+# clones, so putting these repos there is how you get a workspace to hack on
+# them in. Nothing here is ever installed from -- that is TOOLS_DIR's job.
+register_dev_sources() {
+  echo "==> development clones (optional)"
+
   if ! interactive; then
     skip_reason
     return 0
   fi
 
-  local reg dest
-  reg="$(choose_registry "Move dev-setup into which workspace registry?" \
-                         "leave it where it is")"
-  [ -n "$reg" ] || { echo "    staying at $REPO_DIR"; return 0; }
+  echo "    Registry entries are what a new choros clones, so this is how you"
+  echo "    get a workspace to develop these repos in. Installs still come from"
+  echo "    $TOOLS_DIR, not from here."
 
-  dest="$reg/$(basename "$REPO_DIR")"
-  if [ "$dest" = "$REPO_DIR" ]; then
-    echo "    already at $REPO_DIR"
-    return 0
+  local reg
+  reg="$(choose_registry "Clone dev-setup and the tool repos into which registry?" \
+                         "don't -- skip this")"
+  [ -n "$reg" ] || { echo "    skipped"; return 0; }
+
+  mkdir -p "$reg"
+
+  local self_url line name url dest oldifs
+  self_url="$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || echo "")"
+
+  if [ -n "$self_url" ]; then
+    echo "    --- dev-setup"
+    dest="$reg/$(basename "$REPO_DIR")"
+    if [ "$dest" = "$REPO_DIR" ]; then
+      echo "      this checkout is already there"
+    else
+      clone_or_pull "$self_url" "$dest" || true
+    fi
+  else
+    echo "    --- dev-setup: no origin remote, skipped"
   fi
-  if [ -e "$dest" ] || [ -L "$dest" ]; then
-    echo "    !! $dest already exists, not moving"
-    return 0
-  fi
 
-  echo "    $REPO_DIR"
-  echo "    -> $dest"
-  ask_yn "    Move it?" y || { echo "    skipped"; return 0; }
-
-  mkdir -p "$(dirname "$dest")"
-  mv "$REPO_DIR" "$dest"
-
-  # Point the rest of this run at the new location. The dotfile wiring runs
-  # after this, so every block is written with the final path -- no second pass
-  # and no window where a dotfile points at a directory that no longer exists.
-  REPO_DIR="$dest"
-  echo "    moved. wiring below will use the new location."
+  oldifs="$IFS"; IFS=$'\n'
+  for line in $TOOLS; do
+    IFS="$oldifs"
+    name="$(printf '%s' "$line" | cut -d'|' -f1)"
+    url="$(printf '%s' "$line" | cut -d'|' -f2)"
+    echo "    --- $name"
+    clone_or_pull "$url" "$reg/$name" || true
+    IFS=$'\n'
+  done
+  IFS="$oldifs"
 }
 
 # -------------------------------------------------------------------- main ---
@@ -719,11 +744,9 @@ WORKSPACES=""
 
 install_packages
 echo
-# Workspaces and the move come first, so that dotfile wiring below records the
-# final dev-setup location in one pass.
 setup_workspaces
 install_tools
-relocate_self
+register_dev_sources
 echo
 wire_shell
 wire_gitconfig

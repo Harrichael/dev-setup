@@ -120,8 +120,8 @@ re-run with everything installed takes about a second.
 | --- | --- |
 | Packages | macOS: `brew bundle`. Linux: prints the list to install yourself. |
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, and sets a per-workspace git identity. |
-| Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.dev-setup/install/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
-| Relocate | Interactive. Moves this repo into a workspace registry. Runs before the dotfile wiring, so paths are recorded once. |
+| Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.local/share/dev-setup/tools/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
+| Development clones | Interactive, optional. Clones dev-setup and the tool repos into a workspace registry so a choros can hack on them. Nothing is installed from these. |
 | Dotfiles | Wires `~/.zshrc` or `~/.bashrc`, `~/.gitconfig`, and `~/.config/nvim/init.lua`, creating each if absent. |
 | Node | `fnm install --lts` + `fnm default lts-latest`, only if no version exists. fnm ships no Node of its own, so `node`/`npx` — and the `nx` aliases — don't work until this runs. |
 | Neovim | Checks health first; only bootstraps packer, runs `PackerSync`, and builds missing treesitter parsers if something is actually missing. |
@@ -227,10 +227,17 @@ pressing enter keeps them.
 A repo outside every workspace root falls back to your global identity, which is
 why `install.sh` still nags about setting one.
 
-**Relocating this repo.** Setup can move dev-setup into a workspace registry
-(e.g. `~/psrc/.choros-config/registry/dev-setup`) so a choros can clone it like
-any other repo. This repo is *moved* rather than re-cloned, since it holds your
-live config and any work in progress.
+**Development clones.** Setup can clone dev-setup *and* the tool repos into a
+workspace registry, so a new choros can check them out and you have somewhere to
+develop them. This is a separate, optional step, and nothing is ever installed
+from those clones — installs come from `~/.local/share/dev-setup/tools`.
+
+dev-setup is **not** moved into a registry, and never was a good candidate for
+it: the dotfiles point at this checkout by reference, so its authoritative
+location is wherever you cloned it. An earlier version did move it, which
+produced exactly the hazard registries invite — a second, identical-looking
+checkout that drifted commits behind and got read as the live one. If you have
+one of those lying around, it is inert; delete it or `git pull` it.
 
 The move runs **before** the dotfile wiring, so all three blocks are written once
 with the final path. There is no second pass, and no window where a dotfile
@@ -241,8 +248,8 @@ points at a directory that no longer exists. Re-running afterwards reports
 
 ## Tools
 
-`install.sh` clones and installs a set of tools into **`~/.dev-setup/install/`**,
-which dev-setup owns. That directory is the authoritative copy of each tool: it
+`install.sh` clones and installs a set of tools into
+**`${XDG_DATA_HOME:-~/.local/share}/dev-setup/tools/`**, which dev-setup owns. That directory is the authoritative copy of each tool: it
 is never developed in, only pulled and re-installed from, so every installed
 binary has a provenance you can check. All are repos you own and update; each is
 a plain clone, not a submodule — they're tool dependencies you also develop, and
@@ -255,8 +262,13 @@ tool's data structure breaks when that tool evolves — bare registry entries, f
 one, have no working tree at all, and `cargo install --path` needs one. It also
 left a second, identical-looking checkout of every tool on disk, which is its own
 hazard. If you still want registry-hosted installs, see the override below; the
-tools step reports any leftover registry copies so they don't quietly mislead
-you.
+tools step names any other checkout it finds so it can't quietly mislead you.
+
+There is no macOS/Linux split here on purpose. `~/Library/Application Support` is
+the macOS convention for *GUI* apps; CLI tools there use XDG or dotdirs, and
+macOS honours `$XDG_DATA_HOME` when it's set. The variable is the portability
+seam, not a `uname` branch — and it matches the build stamps, which already live
+under `$XDG_STATE_HOME`.
 
 | Tool | Kind | Installed as |
 | --- | --- | --- |
@@ -285,7 +297,7 @@ was not built from this checkout`. A re-run with nothing to do prints
 
 | Variable | Effect |
 | --- | --- |
-| `DEV_SETUP_TOOLS_DIR` | Install from this directory instead of `~/.dev-setup/install`. |
+| `DEV_SETUP_TOOLS_DIR` | Install from this directory instead of the default. |
 | `DEV_SETUP_TOOLS_REGISTRY` | Go back to registry-hosted installs. Takes a workspace root or a registry path. |
 
 ```
@@ -297,9 +309,11 @@ With no tty, prompts take their defaults, so a plain `./install.sh </dev/null`
 installs the tools into the default location unattended.
 
 **Gnomon is the exception to wiring by reference.** Its installer deliberately
-deploys a *copy* to `~/.claude/gnomon.py` and pins `statusLine` at that path, so
-that something executing on every keystroke can't be broken by a half-saved file
-in a checkout. Wiring it by reference instead would be silently reverted the next
+deploys a *copy* to `~/.claude/gnomon.py` and pins `statusLine` at that path.
+The property that buys is a **smoke gate**: every byte that reaches
+`~/.claude/gnomon.py` rendered a sample payload first, so something executing on
+every keystroke is never live until it has run once. Its installer also writes
+`~/.claude/gnomon.provenance` recording which checkout and commit deployed it. Wiring it by reference instead would be silently reverted the next
 time its installer ran. So dev-setup delegates to it, and because that happens on
 every pass, a pull here is also a redeploy — `git pull` alone is *not* enough for
 Gnomon, unlike everything else in this repo.
