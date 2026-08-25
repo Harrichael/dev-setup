@@ -9,7 +9,21 @@ set -euo pipefail
 
 # Resolve the repo root from this script's own location. Do not assume
 # ~/dev-setup -- the clone location is the user's choice.
+# Where this script is running from. May be a development clone.
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# The checkout the dotfiles are wired to. Deliberately NOT the running clone:
+# the dotfiles read it by reference, so if it were a clone you develop in, a
+# half-saved edit or a checked-out WIP branch would change every new shell the
+# moment you made it. This one is pristine -- pulled and read, never developed
+# in -- for the same reason Gnomon deploys a copy instead of a symlink.
+#
+# Set DEV_SETUP_SELF_DIR to the running clone to wire your working copy instead,
+# which is what you want while iterating on the config itself.
+SELF_DIR="${DEV_SETUP_SELF_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/dev-setup/self}"
+
+# Resolved by install_self(); the wiring reads this, never REPO_DIR.
+WIRE_DIR="$REPO_DIR"
 
 case "$(uname -s)" in
   Darwin) OS=macos ;;
@@ -108,9 +122,9 @@ wire_block() {
 wire_shell() {
   local rc target
   if [ "$OS" = macos ]; then
-    rc="$HOME/.zshrc"; target="$REPO_DIR/zshrc"
+    rc="$HOME/.zshrc"; target="$WIRE_DIR/zshrc"
   else
-    rc="$HOME/.bashrc"; target="$REPO_DIR/bashrc"
+    rc="$HOME/.bashrc"; target="$WIRE_DIR/bashrc"
   fi
   echo "==> shell rc"
   wire_block "$rc" "#" "export BASE_PATH=\"\$HOME\"
@@ -120,15 +134,15 @@ source \"$target\"" "$target"
 wire_gitconfig() {
   echo "==> gitconfig"
   wire_block "$HOME/.gitconfig" "#" "[include]
-	path = $REPO_DIR/gitconfig" "$REPO_DIR/gitconfig"
+	path = $WIRE_DIR/gitconfig" "$WIRE_DIR/gitconfig"
 }
 
 wire_nvim() {
   echo "==> nvim init.lua"
-  wire_block "$HOME/.config/nvim/init.lua" "--" "package.path = \";$REPO_DIR/nvim/?.lua;\" .. package.path
-vim.opt.runtimepath:append(\"$REPO_DIR/nvim\")
+  wire_block "$HOME/.config/nvim/init.lua" "--" "package.path = \";$WIRE_DIR/nvim/?.lua;\" .. package.path
+vim.opt.runtimepath:append(\"$WIRE_DIR/nvim\")
 require(\"plugins_base\")
-require(\"init_base\")" "$REPO_DIR/nvim"
+require(\"init_base\")" "$WIRE_DIR/nvim"
 }
 
 # -------------------------------------------------------------------- node ---
@@ -338,6 +352,47 @@ ensure_rust() {
   # shellcheck disable=SC1091
   [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
   command -v cargo >/dev/null 2>&1
+}
+
+# Establish the pristine checkout the dotfiles point at, and set WIRE_DIR.
+# Runs before any wiring so every block is written with the final path.
+install_self() {
+  echo "==> dev-setup source"
+
+  if [ "$SELF_DIR" = "$REPO_DIR" ]; then
+    echo "    wiring this clone directly: $REPO_DIR"
+    echo "    (DEV_SETUP_SELF_DIR points here; edits go live immediately)"
+    WIRE_DIR="$REPO_DIR"
+    return 0
+  fi
+
+  local url
+  url="$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || echo "")"
+  if [ -z "$url" ]; then
+    echo "    !! this clone has no origin remote, so there is nothing to pull"
+    echo "       from. Wiring it directly: $REPO_DIR"
+    WIRE_DIR="$REPO_DIR"
+    return 0
+  fi
+
+  if ! clone_or_pull "$url" "$SELF_DIR"; then
+    echo "    !! could not establish $SELF_DIR. Wiring this clone instead."
+    WIRE_DIR="$REPO_DIR"
+    return 0
+  fi
+  WIRE_DIR="$SELF_DIR"
+
+  # If this clone holds work the pristine copy cannot have, the config about to
+  # go live is not the config being edited. Say so plainly -- silently wiring
+  # the older tree would be the worst outcome.
+  local dirty ahead
+  dirty="$(git -C "$REPO_DIR" status --porcelain 2>/dev/null | wc -l | tr -d " ")"
+  ahead="$(git -C "$REPO_DIR" rev-list --count "@{upstream}..HEAD" 2>/dev/null || echo 0)"
+  if [ "$dirty" != "0" ] || [ "$ahead" != "0" ]; then
+    echo "    note: $REPO_DIR has $dirty uncommitted file(s), $ahead unpushed commit(s)."
+    echo "          Those are NOT what is wired. Push them and re-run, or set"
+    echo "          DEV_SETUP_SELF_DIR=$REPO_DIR to wire this clone while iterating."
+  fi
 }
 
 # ---------------------------------------------------------------- workspaces ---
@@ -771,10 +826,20 @@ record_provenance() {
     echo "# component  source-checkout  commit  dirty"
     echo
 
-    head="$(git -C "$REPO_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    # The wired checkout is the one that matters -- it is what the dotfiles
+    # read. List the running clone too, and only when it is a different tree,
+    # so it is obvious which one is live and which one you were editing.
+    head="$(git -C "$WIRE_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
     dirty=clean
-    [ -n "$(git -C "$REPO_DIR" status --porcelain 2>/dev/null)" ] && dirty=DIRTY
-    printf 'dev-setup\t%s\t%s\t%s\n' "$REPO_DIR" "$head" "$dirty"
+    [ -n "$(git -C "$WIRE_DIR" status --porcelain 2>/dev/null)" ] && dirty=DIRTY
+    printf 'dev-setup(wired)\t%s\t%s\t%s\n' "$WIRE_DIR" "$head" "$dirty"
+
+    if [ "$REPO_DIR" != "$WIRE_DIR" ]; then
+      head="$(git -C "$REPO_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+      dirty=clean
+      [ -n "$(git -C "$REPO_DIR" status --porcelain 2>/dev/null)" ] && dirty=DIRTY
+      printf 'dev-setup(ran from)\t%s\t%s\t%s\n' "$REPO_DIR" "$head" "$dirty"
+    fi
 
     [ -n "${TOOLS_BASE:-}" ] || return 0
     local oldifs; oldifs="$IFS"; IFS=$'\n'
@@ -806,6 +871,7 @@ record_provenance() {
   for root in $(discover_choros_roots); do
     other="$(registry_of "$root")/$(basename "$REPO_DIR")"
     [ "$other" = "$REPO_DIR" ] && continue
+    [ "$other" = "$WIRE_DIR" ] && continue
     [ -d "$other/.git" ] || continue
     echo "    note: another dev-setup checkout exists at $other (nothing points at it)"
   done
@@ -819,6 +885,7 @@ TOOLS_BASE=""
 install_packages
 echo
 setup_workspaces
+install_self
 install_tools
 register_dev_sources
 echo
