@@ -527,6 +527,15 @@ clone_or_pull() {
   fi
 }
 
+# Is the installed binary the one cargo built from this exact directory? Cargo
+# records the source path per package, and a binary left over from a clone
+# somewhere else is stale even when the commit matches.
+cargo_installed_from() {
+  local dest="$1" crates="${CARGO_HOME:-$HOME/.cargo}/.crates.toml"
+  [ -f "$crates" ] || return 1
+  grep -qF "(path+file://$dest)" "$crates"
+}
+
 build_cargo_tool() {
   local name="$1" dest="$2" bin="$3"
   local stamp="$STAMP_DIR/$name.sha" head installed=""
@@ -536,9 +545,16 @@ build_cargo_tool() {
   head="$(git -C "$dest" rev-parse HEAD 2>/dev/null || echo unknown)"
   [ -f "$stamp" ] && installed="$(cat "$stamp")"
 
-  if [ "$installed" = "$head" ] && command -v "$bin" >/dev/null 2>&1; then
+  if [ "$installed" = "$head" ] && command -v "$bin" >/dev/null 2>&1 \
+     && cargo_installed_from "$dest"; then
     echo "      already built at ${head%"${head#???????}"}"
     return 0
+  fi
+
+  # Say so when the reason for rebuilding is provenance rather than a new
+  # commit -- e.g. the binary was installed from a stray clone elsewhere.
+  if [ "$installed" = "$head" ] && ! cargo_installed_from "$dest"; then
+    echo "      re-installing: current binary was not built from this registry copy"
   fi
 
   echo "      building (a cold build can take several minutes)"
@@ -572,18 +588,28 @@ run_tool_installer() {
 
 install_tools() {
   echo "==> tools"
-  if ! interactive; then
-    skip_reason
-    return 0
-  fi
-  if ! ask_yn "    Install/update tools (choros, latticeql, gnomon)?" y; then
-    echo "    skipped"
-    return 0
-  fi
 
   local reg base
-  reg="$(choose_registry "Which workspace registry should hold the tool clones?" \
-                         "clone them beside dev-setup instead")"
+  if [ -n "${DEV_SETUP_TOOLS_REGISTRY:-}" ]; then
+    # Unattended entry point: name the destination and no prompts are asked.
+    # Accepts either a workspace root or the registry directory itself.
+    case "$DEV_SETUP_TOOLS_REGISTRY" in
+      */.choros-config/registry) reg="$DEV_SETUP_TOOLS_REGISTRY" ;;
+      *) reg="$(registry_of "$(abs_path "$DEV_SETUP_TOOLS_REGISTRY")")" ;;
+    esac
+    echo "    destination from DEV_SETUP_TOOLS_REGISTRY: $reg"
+  elif ! interactive; then
+    skip_reason
+    echo "    (set DEV_SETUP_TOOLS_REGISTRY=<workspace root> to install unattended)"
+    return 0
+  elif ! ask_yn "    Install/update tools (choros, latticeql, gnomon)?" y; then
+    echo "    skipped"
+    return 0
+  else
+    reg="$(choose_registry "Which workspace registry should hold the tool clones?" \
+                           "clone them beside dev-setup instead")"
+  fi
+
   if [ -n "$reg" ]; then
     mkdir -p "$reg"
     base="$reg"

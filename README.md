@@ -260,9 +260,22 @@ preferred over the `~/.local/bin` that some of these installers default to. If
 **Rust builds are stamped.** `cargo install` re-links on every invocation, and
 these packages don't bump their version between commits, so cargo can neither
 skip reliably nor notice that the code changed. The commit each tool was built
-from is recorded under `${XDG_STATE_HOME:-~/.local/state}/dev-setup/`, and a
-rebuild happens only when `HEAD` differs. A re-run with nothing to do prints
-`already built at <sha>` and does no work. A cold build takes minutes.
+from is recorded under `${XDG_STATE_HOME:-~/.local/state}/dev-setup/`.
+
+A rebuild is skipped only when the commit matches **and** cargo's own record in
+`~/.cargo/.crates.toml` says the installed binary was built from this registry
+copy. Otherwise a binary installed from a stray clone elsewhere would satisfy a
+commit-only check and never converge on the registry; it now reports
+`re-installing: current binary was not built from this registry copy`. A re-run
+with nothing to do prints `already built at <sha>`. A cold build takes minutes.
+
+**Unattended installs.** The tools step normally prompts. Set
+`DEV_SETUP_TOOLS_REGISTRY` to a workspace root (or a registry path) to run it
+with no prompts:
+
+```
+DEV_SETUP_TOOLS_REGISTRY=~/psrc ./install.sh
+```
 
 **Gnomon is the exception to wiring by reference.** Its installer deliberately
 deploys a *copy* to `~/.claude/gnomon.py` and pins `statusLine` at that path, so
