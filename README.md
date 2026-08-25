@@ -120,7 +120,7 @@ re-run with everything installed takes about a second.
 | --- | --- |
 | Packages | macOS: `brew bundle`. Linux: prints the list to install yourself. |
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, and sets a per-workspace git identity. |
-| Tools | Interactive, defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into a workspace registry and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
+| Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.dev-setup/install/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
 | Relocate | Interactive. Moves this repo into a workspace registry. Runs before the dotfile wiring, so paths are recorded once. |
 | Dotfiles | Wires `~/.zshrc` or `~/.bashrc`, `~/.gitconfig`, and `~/.config/nvim/init.lua`, creating each if absent. |
 | Node | `fnm install --lts` + `fnm default lts-latest`, only if no version exists. fnm ships no Node of its own, so `node`/`npx` — and the `nx` aliases — don't work until this runs. |
@@ -241,10 +241,22 @@ points at a directory that no longer exists. Re-running afterwards reports
 
 ## Tools
 
-`install.sh` clones and installs a set of tools into a workspace registry, so a
-choros can also clone them like any other repo. All are repos you own and
-update; each is a plain clone, not a submodule — they're tool dependencies you
-also develop, and pinning them to a dev-setup commit would only add friction.
+`install.sh` clones and installs a set of tools into **`~/.dev-setup/install/`**,
+which dev-setup owns. That directory is the authoritative copy of each tool: it
+is never developed in, only pulled and re-installed from, so every installed
+binary has a provenance you can check. All are repos you own and update; each is
+a plain clone, not a submodule — they're tool dependencies you also develop, and
+pinning them to a dev-setup commit would only add friction.
+
+**Why not a choros registry?** An earlier version installed from
+`<root>/.choros-config/registry/`, which was a mistake. A registry holds *clone
+sources*; its layout belongs to choros, and a deploy path reaching into another
+tool's data structure breaks when that tool evolves — bare registry entries, for
+one, have no working tree at all, and `cargo install --path` needs one. It also
+left a second, identical-looking checkout of every tool on disk, which is its own
+hazard. If you still want registry-hosted installs, see the override below; the
+tools step reports any leftover registry copies so they don't quietly mislead
+you.
 
 | Tool | Kind | Installed as |
 | --- | --- | --- |
@@ -263,19 +275,26 @@ skip reliably nor notice that the code changed. The commit each tool was built
 from is recorded under `${XDG_STATE_HOME:-~/.local/state}/dev-setup/`.
 
 A rebuild is skipped only when the commit matches **and** cargo's own record in
-`~/.cargo/.crates.toml` says the installed binary was built from this registry
-copy. Otherwise a binary installed from a stray clone elsewhere would satisfy a
-commit-only check and never converge on the registry; it now reports
-`re-installing: current binary was not built from this registry copy`. A re-run
-with nothing to do prints `already built at <sha>`. A cold build takes minutes.
+`~/.cargo/.crates.toml` says the installed binary was built from this checkout.
+Otherwise a binary installed from a stray clone elsewhere would satisfy a
+commit-only check and never converge; it reports `re-installing: current binary
+was not built from this checkout`. A re-run with nothing to do prints
+`already built at <sha>`. A cold build takes minutes.
 
-**Unattended installs.** The tools step normally prompts. Set
-`DEV_SETUP_TOOLS_REGISTRY` to a workspace root (or a registry path) to run it
-with no prompts:
+**Overriding the location.** Two environment variables, both optional:
+
+| Variable | Effect |
+| --- | --- |
+| `DEV_SETUP_TOOLS_DIR` | Install from this directory instead of `~/.dev-setup/install`. |
+| `DEV_SETUP_TOOLS_REGISTRY` | Go back to registry-hosted installs. Takes a workspace root or a registry path. |
 
 ```
+DEV_SETUP_TOOLS_DIR=~/opt/dev-tools ./install.sh
 DEV_SETUP_TOOLS_REGISTRY=~/psrc ./install.sh
 ```
+
+With no tty, prompts take their defaults, so a plain `./install.sh </dev/null`
+installs the tools into the default location unattended.
 
 **Gnomon is the exception to wiring by reference.** Its installer deliberately
 deploys a *copy* to `~/.claude/gnomon.py` and pins `statusLine` at that path, so

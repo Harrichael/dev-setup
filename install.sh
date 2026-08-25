@@ -246,6 +246,11 @@ skip_reason() { echo "    skipped: not a terminal"; }
 ask_yn() {
   local prompt="$1" default="$2" reply hint
   [ "$default" = y ] && hint="[Y/n]" || hint="[y/N]"
+  # With no tty, take the default silently rather than letting the /dev/tty
+  # redirect fail noisily on every call.
+  if ! interactive; then
+    case "$default" in [Yy]*) return 0 ;; *) return 1 ;; esac
+  fi
   printf '%s %s ' "$prompt" "$hint" >&2
   read -r reply < /dev/tty || reply=""
   [ -z "$reply" ] && reply="$default"
@@ -313,6 +318,12 @@ abs_path() {
 # -------------------------------------------------------------------- rust ---
 
 ensure_rust() {
+  # A non-login shell (cron, CI, another tool's subprocess) has no ~/.cargo/bin
+  # on PATH, so `command -v cargo` alone would re-run rustup on every pass.
+  if ! command -v cargo >/dev/null 2>&1 && [ -f "$HOME/.cargo/env" ]; then
+    # shellcheck disable=SC1091
+    . "$HOME/.cargo/env"
+  fi
   if command -v cargo >/dev/null 2>&1; then
     return 0
   fi
@@ -508,6 +519,21 @@ Gnomon|git@github.com:Harrichael/Gnomon.git|script|"
 # between commits, so cargo alone can neither skip reliably nor detect changes.
 STAMP_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dev-setup"
 
+# The authoritative checkout of each tool. dev-setup owns this directory: it is
+# never developed in, only pulled and re-installed from, so every install has a
+# known provenance and a `git pull` here is the whole update.
+#
+# It deliberately does NOT live in a choros registry. A registry holds *clone
+# sources* -- its layout is choros's to change (bare entries, for one, have no
+# working tree at all, and `cargo install --path` needs one), and a deploy path
+# that reaches into another tool's data structure breaks when that tool
+# evolves. It also put a second, identical-looking checkout of every tool on
+# disk, which is its own hazard.
+#
+# Set DEV_SETUP_TOOLS_DIR to move it, or DEV_SETUP_TOOLS_REGISTRY to a workspace
+# root to go back to registry-hosted installs.
+TOOLS_DIR="${DEV_SETUP_TOOLS_DIR:-$HOME/.dev-setup/install}"
+
 clone_or_pull() {
   local url="$1" dest="$2"
   if [ -d "$dest/.git" ]; then
@@ -554,7 +580,7 @@ build_cargo_tool() {
   # Say so when the reason for rebuilding is provenance rather than a new
   # commit -- e.g. the binary was installed from a stray clone elsewhere.
   if [ "$installed" = "$head" ] && ! cargo_installed_from "$dest"; then
-    echo "      re-installing: current binary was not built from this registry copy"
+    echo "      re-installing: current binary was not built from this checkout"
   fi
 
   echo "      building (a cold build can take several minutes)"
@@ -589,33 +615,25 @@ run_tool_installer() {
 install_tools() {
   echo "==> tools"
 
-  local reg base
+  local base
   if [ -n "${DEV_SETUP_TOOLS_REGISTRY:-}" ]; then
-    # Unattended entry point: name the destination and no prompts are asked.
-    # Accepts either a workspace root or the registry directory itself.
+    # Explicit opt-in to registry-hosted installs. Accepts either a workspace
+    # root or the registry directory itself.
     case "$DEV_SETUP_TOOLS_REGISTRY" in
-      */.choros-config/registry) reg="$DEV_SETUP_TOOLS_REGISTRY" ;;
-      *) reg="$(registry_of "$(abs_path "$DEV_SETUP_TOOLS_REGISTRY")")" ;;
+      */.choros-config/registry) base="$DEV_SETUP_TOOLS_REGISTRY" ;;
+      *) base="$(registry_of "$(abs_path "$DEV_SETUP_TOOLS_REGISTRY")")" ;;
     esac
-    echo "    destination from DEV_SETUP_TOOLS_REGISTRY: $reg"
-  elif ! interactive; then
-    skip_reason
-    echo "    (set DEV_SETUP_TOOLS_REGISTRY=<workspace root> to install unattended)"
-    return 0
-  elif ! ask_yn "    Install/update tools (choros, latticeql, gnomon)?" y; then
-    echo "    skipped"
-    return 0
+    echo "    destination from DEV_SETUP_TOOLS_REGISTRY: $base"
   else
-    reg="$(choose_registry "Which workspace registry should hold the tool clones?" \
-                           "clone them beside dev-setup instead")"
+    base="$TOOLS_DIR"
+    if interactive && ! ask_yn "    Install/update tools (choros, latticeql, gnomon) in $base?" y; then
+      echo "    skipped"
+      return 0
+    fi
+    [ -n "${DEV_SETUP_TOOLS_DIR:-}" ] && echo "    destination from DEV_SETUP_TOOLS_DIR: $base"
   fi
 
-  if [ -n "$reg" ]; then
-    mkdir -p "$reg"
-    base="$reg"
-  else
-    base="$(dirname "$REPO_DIR")"
-  fi
+  mkdir -p "$base"
 
   local line name url kind bin dest oldifs
   oldifs="$IFS"; IFS=$'\n'
@@ -633,10 +651,26 @@ install_tools() {
         cargo)  build_cargo_tool "$name" "$dest" "$bin" ;;
         script) run_tool_installer "$name" "$dest" ;;
       esac
+      report_stale_copies "$name" "$dest"
     fi
     IFS=$'\n'
   done
   IFS="$oldifs"
+}
+
+# Earlier versions installed these from a workspace registry. Those clones are
+# now inert -- nothing pulls or builds them -- and look identical to the live
+# checkout, so name them instead of leaving them to mislead. Deleting them is
+# the user's call; a registry entry may still be wanted as a clone source.
+report_stale_copies() {
+  local name="$1" live="$2" root reg other
+  for root in $(discover_choros_roots); do
+    reg="$(registry_of "$root")"
+    other="$reg/$name"
+    [ "$other" = "$live" ] && continue
+    [ -d "$other/.git" ] || continue
+    echo "      note: an unused copy remains at $other"
+  done
 }
 
 # ------------------------------------------------------- relocate dev-setup ---
