@@ -127,6 +127,7 @@ re-run with everything installed takes about a second.
 | Packages | macOS: `brew bundle`. Linux: prints the list to install yourself. |
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, and sets a per-workspace git identity. |
 | Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.local/share/dev-setup/tools/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
+| Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
 | dev-setup source | Pulls the pristine checkout the dotfiles point at, into `~/.local/share/dev-setup/self`. Runs before wiring so paths are recorded once. |
 | Development clones | Interactive, optional. Clones dev-setup and the tool repos into a workspace registry so a choros can hack on them. Nothing is installed from these. |
 | Dotfiles | Wires `~/.zshrc` or `~/.bashrc`, `~/.gitconfig`, and `~/.config/nvim/init.lua`, creating each if absent. |
@@ -384,6 +385,34 @@ guarded so a machine without choros starts cleanly.
 
 ---
 
+## Claude Code global instructions
+
+Claude Code reads `~/.claude/CLAUDE.md` as instructions for every session on the
+machine, whatever project you're in. `install.sh` wires it by reference like the
+other dotfiles, using CLAUDE.md's own `@import` syntax, so the content is
+version-controlled here and a pull updates it:
+
+```
+<!-- >>> dev-setup >>> -->
+@~/.local/share/dev-setup/self/claude/CLAUDE.md
+<!-- <<< dev-setup <<< -->
+```
+
+**Write your instructions in `claude/CLAUDE.md` in this repo.** Not in
+`~/.claude/CLAUDE.md` — that file holds only the import, and `install.sh` rewrites
+the block between the sentinels. Anything you add *outside* the sentinels there is
+left alone, but it won't be version-controlled.
+
+It's at `claude/CLAUDE.md` rather than the repo root deliberately. A root
+`CLAUDE.md` would also be read as dev-setup's own *project* instructions, so
+global rules would apply twice while working here, and anything repo-specific
+would leak into every other project.
+
+The sentinels are `<!-- ... -->` because markdown has no line comment — an
+unterminated `<!--` would swallow the rest of the file.
+
+---
+
 ## Shell notes
 
 `golink <name>` registers the current directory as a link under
@@ -438,4 +467,11 @@ require("init_base")
 ```
 [include]
         path = <SELF_DIR>/gitconfig
+```
+
+`~/.claude/CLAUDE.md`
+```
+<!-- >>> dev-setup >>> -->
+@<SELF_DIR>/claude/CLAUDE.md
+<!-- <<< dev-setup <<< -->
 ```
