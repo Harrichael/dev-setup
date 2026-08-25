@@ -9,6 +9,35 @@ set -euo pipefail
 
 # Resolve the repo root from this script's own location. Do not assume
 # ~/dev-setup -- the clone location is the user's choice.
+# Pulling is opt-in. Installing and updating are different jobs: fusing them
+# means you cannot install a pin, roll back, or test a branch, because every
+# install silently becomes "install whatever is newest".
+UPDATE=0
+
+usage() {
+  cat <<'USAGE'
+usage: install.sh [--update]
+
+  --update   Fast-forward every checkout to its origin default branch first.
+             Without it, install.sh installs whatever the checkouts are at
+             now, and only clones what is missing.
+
+To install a specific version, check it out and install without --update:
+
+  git -C ~/.local/share/dev-setup/self checkout v1.2
+  ~/.local/share/dev-setup/self/install.sh
+USAGE
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --update) UPDATE=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "install.sh: unknown argument: $1" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
 # Where this script is running from. May be a development clone.
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -369,7 +398,7 @@ install_self() {
     local self_url
     self_url="$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || echo "")"
     if [ -n "$self_url" ]; then
-      clone_or_pull "$self_url" "$SELF_DIR" || true
+      ensure_checkout "$self_url" "$SELF_DIR" || true
     fi
     WIRE_DIR="$SELF_DIR"
     return 0
@@ -393,7 +422,7 @@ install_self() {
     return 0
   fi
 
-  if ! clone_or_pull "$url" "$SELF_DIR"; then
+  if ! ensure_checkout "$url" "$SELF_DIR"; then
     echo "    !! could not establish $SELF_DIR. Wiring this clone instead."
     WIRE_DIR="$REPO_DIR"
     return 0
@@ -626,9 +655,22 @@ STAMP_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dev-setup"
 # root to go back to registry-hosted installs.
 TOOLS_DIR="${DEV_SETUP_TOOLS_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/dev-setup/tools}"
 
-clone_or_pull() {
+# Clone if absent; update only when --update was given. A missing checkout has
+# no version to preserve, so cloning it is not an update.
+ensure_checkout() {
   local url="$1" dest="$2"
   if [ -d "$dest/.git" ]; then
+    if [ "$UPDATE" -eq 0 ]; then
+      echo "      at $(git -C "$dest" rev-parse --short HEAD 2>/dev/null || echo unknown) (--update to pull)"
+      return 0
+    fi
+    # A pinned checkout is detached, which is a deliberate state, not a
+    # problem -- say so rather than blaming a dirty tree.
+    if ! git -C "$dest" symbolic-ref -q HEAD >/dev/null; then
+      echo "      pinned at $(git -C "$dest" rev-parse --short HEAD), not updating"
+      echo "        (git -C $dest checkout main   to unpin)"
+      return 0
+    fi
     if git -C "$dest" pull --ff-only --quiet 2>/dev/null; then
       echo "      pulled: $dest"
     else
@@ -773,7 +815,7 @@ install_tools() {
     dest="$base/$name"
 
     echo "    --- $name"
-    if clone_or_pull "$url" "$dest"; then
+    if ensure_checkout "$url" "$dest"; then
       case "$kind" in
         cargo)  build_cargo_tool "$name" "$dest" "$bin" ;;
         script) run_tool_installer "$name" "$dest" ;;
@@ -842,7 +884,7 @@ register_dev_sources() {
     if [ "$dest" = "$REPO_DIR" ]; then
       echo "      this checkout is already there"
     else
-      clone_or_pull "$self_url" "$dest" || true
+      ensure_checkout "$self_url" "$dest" || true
     fi
   else
     echo "    --- dev-setup: no origin remote, skipped"
@@ -854,7 +896,7 @@ register_dev_sources() {
     name="$(printf '%s' "$line" | cut -d'|' -f1)"
     url="$(printf '%s' "$line" | cut -d'|' -f2)"
     echo "    --- $name"
-    clone_or_pull "$url" "$reg/$name" || true
+    ensure_checkout "$url" "$reg/$name" || true
     IFS=$'\n'
   done
   IFS="$oldifs"

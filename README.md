@@ -172,9 +172,30 @@ forgot you were on, would change every new shell the moment it happened — and
 `gitconfig` and nvim with it. That's the same hazard Gnomon avoids by deploying a
 copy rather than a symlink; it just happened to be less visible here.
 
-So the update procedure is **`./install.sh`**, which pulls that checkout and
-re-wires in one pass. A `git pull` in your own clone changes nothing that's live.
-That's the point: your working tree is yours to break.
+So the update procedure is **`./install.sh --update`**, which fast-forwards that
+checkout and re-wires in one pass. A `git pull` in your own clone changes nothing
+that's live. That's the point: your working tree is yours to break.
+
+**`install.sh` on its own does not pull.** Installing and updating are separate
+jobs, and fusing them would mean every install silently became "install whatever
+is newest" — leaving no way to install a pin, roll back, or test a branch. So a
+bare run installs whatever the checkouts are at, and only clones what is missing
+(a checkout that doesn't exist yet has no version to preserve).
+
+To install a specific version, check it out and install without `--update`:
+
+```
+git -C ~/.local/share/dev-setup/self checkout v1.2
+~/.local/share/dev-setup/self/install.sh
+```
+
+That needs no extra flag, which is why there isn't one. A pinned checkout is
+detached, and `--update` deliberately refuses to move it — it reports
+`pinned at <sha>, not updating` and tells you how to unpin. Same for the tools:
+check out a ref in `~/.local/share/dev-setup/tools/<Name>` and install.
+
+Unknown arguments are an error rather than being ignored, so a typo like
+`--dry` fails instead of quietly performing a real install.
 
 While you're actually iterating on the config, wire your clone directly:
 
