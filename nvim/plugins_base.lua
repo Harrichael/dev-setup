@@ -31,10 +31,16 @@ require('packer').startup(function(use)
   -- Complete search by typing jump code character.
   -- At anypoint, you may continue with normal workflow if you just continue
   --   on, as long as the first key you press is not highlighted.
+  -- Upstream deleted the GitHub repo ("nuke it from orbit") and moved to
+  -- Codeberg; the old 'ggandor/leap.nvim' clones empty. The keymap setup
+  -- function was also renamed set_default_keymaps -> add_default_mappings.
+  -- add_default_mappings is itself marked @deprecated upstream but still works;
+  -- the current idiom is explicit `vim.keymap.set(..., '<Plug>(leap)')`, which
+  -- changes the motion semantics, so it's left alone deliberately.
   use {
-    'ggandor/leap.nvim',
+    'https://codeberg.org/andyg/leap.nvim',
     config = function()
-        require('leap').set_default_keymaps()
+        require('leap').add_default_mappings()
     end
   }
 
@@ -107,8 +113,11 @@ require('packer').startup(function(use)
   -- }
 
   -- Treesitter
+  -- Pinned to master: upstream's default branch is now the v1.0 rewrite, which
+  -- dropped the `nvim-treesitter.configs` module that init_base.lua configures.
   use {
     'nvim-treesitter/nvim-treesitter',
+    branch = 'master',
     run = ':TSUpdate'
   }
 

@@ -7,7 +7,7 @@ vim.g.copilot_enabled = false
 vim.o.ignorecase  = true           -- case insensitive 
 vim.o.smartcase   = true           -- requires ignorecase, but capitals in searchs are not ignored
 vim.o.hlsearch    = true           -- highlight search 
-vim.g.noincsearch = true           -- incremental search is annoying
+vim.o.incsearch   = false          -- incremental search is annoying
 
 
 -- Indentation
