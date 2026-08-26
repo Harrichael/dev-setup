@@ -191,7 +191,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -221,7 +234,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -251,7 +277,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -281,7 +320,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -311,7 +363,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -341,7 +406,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -371,7 +449,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -401,7 +492,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -431,7 +535,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -469,7 +586,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -502,7 +632,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -539,6 +682,19 @@
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
                       "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$",
                       "^com\\.google\\.Chrome$",
                       "^com\\.apple\\.Safari$",
                       "^org\\.mozilla\\.firefox$"
@@ -573,6 +729,19 @@
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
                       "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$",
                       "^com\\.google\\.Chrome$",
                       "^com\\.apple\\.Safari$",
                       "^org\\.mozilla\\.firefox$"
@@ -609,6 +778,19 @@
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
                       "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$",
                       "^com\\.google\\.Chrome$",
                       "^com\\.apple\\.Safari$",
                       "^org\\.mozilla\\.firefox$"
@@ -645,6 +827,19 @@
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
                       "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$",
                       "^com\\.google\\.Chrome$",
                       "^com\\.apple\\.Safari$",
                       "^org\\.mozilla\\.firefox$"
@@ -682,7 +877,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -717,7 +925,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -747,7 +968,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -777,7 +1011,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -807,7 +1054,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -837,7 +1097,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -869,7 +1142,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -899,7 +1185,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -929,7 +1228,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]
@@ -965,7 +1277,20 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^org\\.alacritty$",
+                      "^com\\.github\\.wez\\.wezterm$",
+                      "^dev\\.warp\\.Warp-Stable$",
+                      "^co\\.zeit\\.hyper$",
+                      "^org\\.tabby$",
+                      "^com\\.microsoft\\.VSCode$",
+                      "^com\\.microsoft\\.VSCodeInsiders$",
+                      "^com\\.visualstudio\\.code\\.oss$",
+                      "^com\\.todesktop\\.230313mzl4w4u92$",
+                      "^com\\.jetbrains\\.",
+                      "^dev\\.zed\\.Zed",
+                      "^org\\.gnu\\.Emacs$",
+                      "^org\\.vim\\.MacVim$"
                     ]
                   }
                 ]

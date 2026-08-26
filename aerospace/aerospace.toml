@@ -55,6 +55,9 @@ cmd-ctrl-4 = 'workspace 4'
 cmd-ctrl-5 = 'workspace 5'
 cmd-ctrl-w = 'workspace W'
 
+# These shadow Microsoft Word's Apply-Heading-1/2/3 styles, which is a real
+# cost if Word is in use. AeroSpace has no per-app binding conditions, so
+# there is no way to make an exception for one app.
 cmd-alt-1 = 'move-node-to-workspace 1'
 cmd-alt-2 = 'move-node-to-workspace 2'
 cmd-alt-3 = 'move-node-to-workspace 3'
@@ -75,6 +78,9 @@ cmd-alt-w = 'move-node-to-workspace W'
 # with explicit boundaries stays inside the workspace. The cost is positional
 # cycling rather than MRU -- a toggle with two windows, a cycle with three or
 # more. AeroSpace has no workspace-scoped MRU.
+# alt+tab is captured globally, including inside remote-desktop and VM
+# sessions, where the guest OS may want it. Use the service mode or the
+# F-keys if you need it forwarded.
 alt-tab = 'focus dfs-next --boundaries workspace --boundaries-action wrap-around-the-workspace'
 alt-shift-tab = 'focus dfs-prev --boundaries workspace --boundaries-action wrap-around-the-workspace'
 alt-backtick = 'workspace-back-and-forth'

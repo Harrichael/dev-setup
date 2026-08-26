@@ -451,12 +451,26 @@ wire_symlink() {
   mkdir -p "$(dirname "$link")"
 
   if [ -L "$link" ]; then
-    if [ "$(readlink "$link")" = "$target" ]; then
+    local current
+    current="$(readlink "$link")"
+    if [ "$current" = "$target" ]; then
       echo "    already current: $link"
-    else
-      ln -sfn "$target" "$link"
-      echo "    relinked: $link"
+      return 0
     fi
+    # Re-point a link that names some older dev-setup checkout, but never one
+    # the user aimed somewhere else deliberately.
+    case "$current" in
+      *"/dev-setup/"*)
+        ln -sfn "$target" "$link"
+        echo "    relinked: $link"
+        echo "      was -> $current"
+        ;;
+      *)
+        echo "    !! $link is a symlink to somewhere else. Not touching it."
+        echo "       currently -> $current"
+        echo "       adopt:  ln -sfn \"$target\" \"$link\""
+        ;;
+    esac
     return 0
   fi
 
@@ -477,10 +491,13 @@ wire_symlink() {
   echo "    linked: $link"
 }
 
-# Karabiner rewrites karabiner.json from its own UI, so a symlink into the repo
-# would be clobbered by any GUI change. Copy instead, and never overwrite: a
-# divergence is the user's edit, and losing it silently would be worse than
-# leaving the machine out of date.
+# Karabiner rewrites karabiner.json from its own UI -- it records devices,
+# other profiles, and which profile is selected -- so neither a symlink nor a
+# whole-file copy is safe. What this repo owns is one profile, by name. So merge
+# that profile in and leave everything else exactly as Karabiner left it.
+#
+# This matters more than it looks: the Command/Globe swap lives in that profile,
+# so the file is guaranteed to be touched by the UI eventually.
 wire_karabiner() {
   echo "==> karabiner"
   local src="$WIRE_DIR/karabiner/karabiner.json"
@@ -490,16 +507,45 @@ wire_karabiner() {
   if [ ! -e "$dst" ]; then
     cp "$src" "$dst"
     echo "    installed: $dst"
-    echo "    (Karabiner needs Input Monitoring permission on first run)"
     return 0
   fi
-  if cmp -s "$src" "$dst"; then
-    echo "    already current: $dst"
-    return 0
-  fi
-  echo "    !! $dst differs from the repo copy, and Karabiner owns this file."
-  echo "       compare:  diff \"$dst\" \"$src\""
-  echo "       apply:    cp \"$src\" \"$dst\""
+
+  SRC="$src" DST="$dst" python3 <<'PYEOF'
+import json, os, shutil, sys
+
+src, dst = os.environ['SRC'], os.environ['DST']
+repo = json.load(open(src))
+try:
+    live = json.load(open(dst))
+except Exception as e:
+    print(f"    !! {dst} is not valid JSON ({e}); not touching it")
+    sys.exit(0)
+
+want = repo['profiles'][0]
+name = want['name']
+live.setdefault('profiles', [])
+
+for i, p in enumerate(live['profiles']):
+    if p.get('name') == name:
+        if p == want or {k: v for k, v in p.items() if k != 'selected'} == \
+                        {k: v for k, v in want.items() if k != 'selected'}:
+            print(f"    already current: {dst}")
+            sys.exit(0)
+        # Preserve which profile the user has selected; replace the rest.
+        merged = dict(want)
+        merged['selected'] = p.get('selected', want.get('selected', False))
+        live['profiles'][i] = merged
+        break
+else:
+    live['profiles'].append(want)
+
+shutil.copy2(dst, dst + '.bak')
+with open(dst, 'w') as f:
+    json.dump(live, f, indent=2)
+    f.write('\n')
+print(f"    merged profile '{name}' into {dst}")
+print(f"    (previous file kept at {os.path.basename(dst)}.bak)")
+PYEOF
 }
 
 # A config file is not a running daemon. Karabiner registers its daemon and

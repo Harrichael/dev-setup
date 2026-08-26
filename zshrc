@@ -174,6 +174,9 @@ bindkey "^[[H"    beginning-of-line    # Home
 bindkey "^[[F"    end-of-line          # End
 bindkey "^[[1~"   beginning-of-line    # Home, alternate encoding
 bindkey "^[[4~"   end-of-line          # End, alternate encoding
-bindkey "^H"      backward-kill-word   # ctrl+backspace
+# ctrl+backspace and ctrl+h transmit the same byte (0x08), so this also
+# changes bare ctrl+h from delete-char to delete-word. Plain backspace is
+# 0x7f and unaffected.
+bindkey "^H"      backward-kill-word   # ctrl+backspace (= ctrl+h)
 bindkey "^[[3;5~" kill-word            # ctrl+delete
 bindkey "^[[3~"   delete-char          # Delete

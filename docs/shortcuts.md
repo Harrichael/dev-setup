@@ -140,6 +140,9 @@ start. Word movement matches the GUI anyway:
 | Chrome DevTools **element picker** (`cmd shift c`) | kitty launcher |
 | `Home`/`End` in browsers | Excluded on purpose, so Home still scrolls rather than navigating Back |
 | kitty split-close on `cmd shift d` | Nothing — but it is *not* "split down"; it closes |
+| Word's **Apply Heading 1/2/3** (`cmd alt 1/2/3`) | Send-window-to-workspace |
+| `alt tab` inside remote-desktop / VM sessions | Captured globally; AeroSpace has no per-app exceptions |
+| bare `ctrl h` (was delete-char) | `ctrl backspace` — they are the same byte, 0x08 |
 
 `cmd alt i` and `cmd alt j` still open DevTools.
 
@@ -182,9 +185,10 @@ word movement before any app sees it. Safe: AeroSpace does not use macOS Spaces.
   below the layer where System Settings → Modifier Keys applies, so that swap
   stops working the moment Karabiner runs. It is therefore set in
   `karabiner/karabiner.json` as a `simple_modifications` pair instead.
-- **Terminal exclusions are by bundle ID**, so an editor with an embedded
-  terminal (VS Code, JetBrains, Zed) is *not* excluded and would get `ctrl+c` as
-  copy inside its terminal. In-browser terminals can never be excluded.
+- **Terminal exclusions are by bundle ID.** 17 are listed, covering the common
+  terminals plus editors with embedded ones (VS Code, Cursor, JetBrains, Zed,
+  Emacs, MacVim). Anything not on the list gets `ctrl+c` as copy inside its
+  terminal, and in-browser terminals can never be excluded by bundle ID at all.
 - **The `cmd+fn` aliases are unverified.** Command and Globe are swapped in
   System Settings, and which of the two Karabiner observes has not been tested.
   If they misbehave, moving the swap into Karabiner's `simple_modifications`

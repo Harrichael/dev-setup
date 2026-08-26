@@ -135,7 +135,7 @@ re-run with everything installed takes about a second.
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, and sets a per-workspace git identity. |
 | Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.local/share/dev-setup/tools/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
 | aerospace | macOS only. Symlinks `~/.config/aerospace/aerospace.toml` to this repo's copy. |
-| karabiner | macOS only. Copies `karabiner/karabiner.json` if absent; never overwrites a divergent one. |
+| karabiner | macOS only. Merges the `dev-setup` **profile** into `karabiner.json`, leaving devices, other profiles and the selected profile untouched. |
 | kitty | Wires `~/.config/kitty/kitty.conf` to include this repo's shared + per-OS kitty config. |
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
 | dev-setup source | Pulls the pristine checkout the dotfiles point at, into `~/.local/share/dev-setup/self`. Runs before wiring so paths are recorded once. |
@@ -464,7 +464,7 @@ Four layers cooperate, and the order they see a keystroke in matters:
 
 | Layer | File | Wiring |
 | --- | --- | --- |
-| Karabiner | `karabiner/karabiner.json` | **copy** — its UI rewrites the file |
+| Karabiner | `karabiner/karabiner.json` | **profile merge** — its UI rewrites the file |
 | AeroSpace | `aerospace/aerospace.toml` | **symlink** — TOML has no include |
 | kitty | `kitty/*.conf` | `include`, by reference |
 | shell | `zshrc` / `bashrc` | `source`, by reference |
@@ -500,6 +500,18 @@ into `F18` / `F19` / `F20`, which is what AeroSpace actually binds. Pressing
 and Karabiner additionally maps `ctrl+1..9` onto it for GUI apps. Workspace
 switching is `cmd+ctrl+N` (with `cmd+fn+N` aliased on top by Karabiner); moving a
 window there is `cmd+alt+N`.
+
+**Karabiner has to be launched by hand, once.** It registers its daemon and
+system extension via `SMAppService` on first run, after GUI approval, so a
+config file alone does nothing — `install.sh` cannot grant Input Monitoring.
+Until then the whole `ctrl` text layer and every `cmd+Globe` chord are inert,
+which `install.sh` now detects and reports. Karabiner also owns the
+Command/Globe swap: it grabs the keyboard below the layer where System Settings
+→ Modifier Keys applies, so that remap stops working the moment Karabiner runs
+and has to live in `simple_modifications` instead.
+
+**Printing the reference:** `./docs/print-shortcuts.sh` (add `--pdf-only` to
+just build it). Renders the markdown to a two-column PDF via Chrome headless.
 
 **One manual step:** disable *Move left/right a space* in System Settings →
 Keyboard → Keyboard Shortcuts → Mission Control. macOS binds those to

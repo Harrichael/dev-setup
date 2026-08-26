@@ -158,5 +158,7 @@ bind '"\e[1;3D": backward-word'    # alt+left
 bind '"\e[1;3C": forward-word'     # alt+right
 bind '"\e[H": beginning-of-line'
 bind '"\e[F": end-of-line'
-bind '"\C-h": backward-kill-word'  # ctrl+backspace
+# ctrl+backspace and ctrl+h are the same byte (0x08), so this also rebinds
+# bare ctrl+h. Plain backspace is 0x7f and unaffected.
+bind '"\C-h": backward-kill-word'  # ctrl+backspace (= ctrl+h)
 bind '"\e[3;5~": kill-word'        # ctrl+delete
