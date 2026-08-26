@@ -16,6 +16,154 @@
         },
         "rules": [
           {
+            "description": "cmd+fn+N -> cmd+ctrl+N (workspaces), cmd+fn+tab -> F20 (last workspace). AeroSpace cannot bind fn/Globe at all -- it only knows cmd/alt/ctrl/shift -- so fn has to be translated here. The cmd+ctrl and alt+backtick chords stay bound natively in AeroSpace, so navigation survives Karabiner being off. UNTESTED: this machine swaps Command and Globe in System Settings, and which of the two Karabiner observes is not yet verified.",
+            "manipulators": [
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "1",
+                  "modifiers": {
+                    "mandatory": [
+                      "command",
+                      "fn"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "1",
+                    "modifiers": [
+                      "command",
+                      "control"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "2",
+                  "modifiers": {
+                    "mandatory": [
+                      "command",
+                      "fn"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "2",
+                    "modifiers": [
+                      "command",
+                      "control"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "3",
+                  "modifiers": {
+                    "mandatory": [
+                      "command",
+                      "fn"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "3",
+                    "modifiers": [
+                      "command",
+                      "control"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "4",
+                  "modifiers": {
+                    "mandatory": [
+                      "command",
+                      "fn"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "4",
+                    "modifiers": [
+                      "command",
+                      "control"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "5",
+                  "modifiers": {
+                    "mandatory": [
+                      "command",
+                      "fn"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "5",
+                    "modifiers": [
+                      "command",
+                      "control"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "w",
+                  "modifiers": {
+                    "mandatory": [
+                      "command",
+                      "fn"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "w",
+                    "modifiers": [
+                      "command",
+                      "control"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "tab",
+                  "modifiers": {
+                    "mandatory": [
+                      "command",
+                      "fn"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "f20"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "description": "cmd+tab -> F18/F19/F20 for AeroSpace. macOS consumes cmd+tab in the WindowServer, above global hotkeys, so AeroSpace never sees it. Karabiner is below the WindowServer. No app exclusions: this is window management, wanted everywhere.",
             "manipulators": [
               {

@@ -11,22 +11,34 @@ macOS. Generated from `aerospace/aerospace.toml`, `kitty/`, `karabiner/` and
 
 ---
 
-## cmd — spaces and windows (AeroSpace)
+## Spaces and windows (AeroSpace)
 
 | Key | Does |
 | --- | --- |
-| `cmd shift 1`…`5` | Go to workspace 1–5 |
-| `cmd shift w` | Go to workspace **W** (Work) |
-| `cmd alt shift 1`…`5` | Send window to workspace 1–5 |
-| `cmd alt shift w` | Send window to workspace W |
-| `cmd tab` | Next window **in this space** (cycles, never leaves) |
-| `cmd alt tab` | Previous window in this space |
-| `cmd shift tab` | Back to the **previous workspace** |
+| `cmd fn 1`…`5` | Go to workspace 1–5 |
+| `cmd fn w` | Go to workspace **W** (Work) |
+| `cmd fn tab` | Back to the **previous workspace** |
+| `cmd alt 1`…`5` | Send window to workspace 1–5 |
+| `cmd alt w` | Send window to workspace W |
+| `alt tab` | Next window **in this space** (cycles, never leaves) |
+| `alt shift tab` | Previous window in this space |
+| `alt backtick` | Back to the previous workspace |
 
-`cmd 1`…`cmd 9` is left free on purpose, so **browser tab-by-number works
-again**. The three `cmd tab` chords are rewritten by Karabiner into `F18`/`F19`/
-`F20`, because macOS consumes `cmd+tab` above global hotkeys — pressing `F18`
-directly does the same thing, which is how to tell the layers apart.
+**Two paths on purpose.** AeroSpace cannot bind `fn`/Globe at all — it only
+understands `cmd`, `alt`, `ctrl`, `shift`. So the real bindings are `cmd+ctrl+N`,
+`cmd+ctrl+w` and `alt+backtick`, and Karabiner aliases `cmd+fn+…` on top of
+them. If Karabiner is off, use the native chords below and nothing is lost.
+
+| Native fallback | Same as |
+| --- | --- |
+| `cmd ctrl 1`…`5` | `cmd fn 1`…`5` |
+| `cmd ctrl w` | `cmd fn w` |
+| `alt backtick` | `cmd fn tab` |
+| `F18` / `F19` / `F20` | cycle next / cycle prev / last workspace |
+
+`cmd 1`…`cmd 9` is left free on purpose, so **browser tab-by-number works**.
+`cmd+tab` is unusable for window management: macOS consumes it above global
+hotkeys, so AeroSpace never sees it.
 
 ## cmd+alt — layout and movement (AeroSpace)
 
@@ -136,8 +148,14 @@ word movement before any app sees it. Safe: AeroSpace does not use macOS Spaces.
 
 - **No workspace-scoped MRU.** `cmd tab` cycles in tree order. With two windows
   that is a toggle; with three or more it is a cycle, not "last used".
-- **`cmd+tab` depends on Karabiner.** macOS consumes it in the WindowServer,
-  which sits above global hotkeys, so AeroSpace cannot see it directly. If
-  Karabiner is disabled or lacks Input Monitoring permission, `cmd+tab` reverts
-  to the macOS App Switcher and will jump you across workspaces.
+- **`cmd+fn+…` depends on Karabiner**, because AeroSpace cannot bind `fn`. The
+  `cmd+ctrl+…` and `alt+…` equivalents are native and always work, which is why
+  both are bound.
+- **`cmd+tab` is not used at all.** macOS consumes it in the WindowServer, above
+  global hotkeys, so AeroSpace never receives it — the App Switcher appears and
+  jumps you across workspaces regardless of what is bound.
+- **The `cmd+fn` aliases are unverified.** Command and Globe are swapped in
+  System Settings, and which of the two Karabiner observes has not been tested.
+  If they misbehave, moving the swap into Karabiner's `simple_modifications`
+  gives one source of truth.
 - **Terminal.app transparency** is a Terminal profile setting, set by hand.

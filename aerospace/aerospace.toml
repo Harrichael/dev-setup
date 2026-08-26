@@ -40,34 +40,45 @@ outer.bottom = 8
 # --- Workspaces -------------------------------------------------------------
 # Bare cmd+1..9 is deliberately left UNBOUND. An AeroSpace binding is a global
 # hotkey, so binding it would take tab-by-number away from every app -- Chrome
-# in particular, which has no rebinding mechanism at all. Leaving it free is
-# what makes cmd+1..9 work as browser tabs again.
-cmd-shift-1 = 'workspace 1'
-cmd-shift-2 = 'workspace 2'
-cmd-shift-3 = 'workspace 3'
-cmd-shift-4 = 'workspace 4'
-cmd-shift-5 = 'workspace 5'
-cmd-shift-w = 'workspace W'
+# in particular, which has no rebinding mechanism at all.
+#
+# cmd+ctrl, not cmd+shift: with Command and Globe swapped, the bottom-left row
+# is cmd/ctrl/alt, so cmd+ctrl is a one-hand roll while shift means reaching up.
+# AeroSpace cannot bind fn/Globe at all ("Can't parse modifiers" -- it only
+# knows cmd/alt/ctrl/shift), so the preferred cmd+fn+N is layered on top of
+# these by Karabiner rather than replacing them. That way the native chord keeps
+# working if Karabiner is off.
+cmd-ctrl-1 = 'workspace 1'
+cmd-ctrl-2 = 'workspace 2'
+cmd-ctrl-3 = 'workspace 3'
+cmd-ctrl-4 = 'workspace 4'
+cmd-ctrl-5 = 'workspace 5'
+cmd-ctrl-w = 'workspace W'
 
-cmd-alt-shift-1 = 'move-node-to-workspace 1'
-cmd-alt-shift-2 = 'move-node-to-workspace 2'
-cmd-alt-shift-3 = 'move-node-to-workspace 3'
-cmd-alt-shift-4 = 'move-node-to-workspace 4'
-cmd-alt-shift-5 = 'move-node-to-workspace 5'
-cmd-alt-shift-w = 'move-node-to-workspace W'
+cmd-alt-1 = 'move-node-to-workspace 1'
+cmd-alt-2 = 'move-node-to-workspace 2'
+cmd-alt-3 = 'move-node-to-workspace 3'
+cmd-alt-4 = 'move-node-to-workspace 4'
+cmd-alt-5 = 'move-node-to-workspace 5'
+cmd-alt-w = 'move-node-to-workspace W'
 
 # --- "Last used", at two scopes ---------------------------------------------
-# These are bound to F18-F20, not to cmd+tab, because macOS's App Switcher
-# consumes cmd+tab in the WindowServer -- above global hotkeys, so AeroSpace
-# never sees the keystroke. Karabiner sits BELOW the WindowServer and rewrites
-# cmd+tab into these function keys; see karabiner/karabiner.json. Pressing F18
-# directly also works, which is how to tell the two layers apart when debugging.
+# alt+tab and alt+backtick are NOT claimed by macOS, so these work with no
+# Karabiner involvement. cmd+tab is unusable directly: macOS consumes it in the
+# WindowServer, above global hotkeys, so AeroSpace never sees the keystroke --
+# the binding appears to do nothing while the App Switcher jumps you to another
+# workspace. F18-F20 exist as targets for Karabiner to rewrite cmd+tab and
+# cmd+fn+tab into; pressing them directly tests the AeroSpace half alone.
 #
 # focus-back-and-forth is deliberately NOT used: it tracks the last focused
 # window globally, so from workspace 1 it jumps you to workspace 2. dfs-next
-# with explicit boundaries stays inside the workspace. The cost is that this is
-# positional cycling, not MRU -- identical to a toggle with two windows, a cycle
-# with three or more. AeroSpace has no workspace-scoped MRU.
+# with explicit boundaries stays inside the workspace. The cost is positional
+# cycling rather than MRU -- a toggle with two windows, a cycle with three or
+# more. AeroSpace has no workspace-scoped MRU.
+alt-tab = 'focus dfs-next --boundaries workspace --boundaries-action wrap-around-the-workspace'
+alt-shift-tab = 'focus dfs-prev --boundaries workspace --boundaries-action wrap-around-the-workspace'
+alt-backtick = 'workspace-back-and-forth'
+
 f18 = 'focus dfs-next --boundaries workspace --boundaries-action wrap-around-the-workspace'
 f19 = 'focus dfs-prev --boundaries workspace --boundaries-action wrap-around-the-workspace'
 f20 = 'workspace-back-and-forth'
