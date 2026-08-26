@@ -442,6 +442,88 @@ install_self() {
   fi
 }
 
+# Some configs cannot be wired by reference because their format has no include
+# directive. A symlink is the next best thing: the file still lives in the repo,
+# so a pull updates it. Only safe for configs the app never rewrites itself.
+wire_symlink() {
+  local target="$1" link="$2" label="$3"
+  echo "==> $label"
+  mkdir -p "$(dirname "$link")"
+
+  if [ -L "$link" ]; then
+    if [ "$(readlink "$link")" = "$target" ]; then
+      echo "    already current: $link"
+    else
+      ln -sfn "$target" "$link"
+      echo "    relinked: $link"
+    fi
+    return 0
+  fi
+
+  if [ -e "$link" ]; then
+    if cmp -s "$link" "$target"; then
+      rm -f "$link"
+      ln -s "$target" "$link"
+      echo "    replaced identical file with a symlink: $link"
+      return 0
+    fi
+    echo "    !! $link exists and differs from the repo copy. Not touching it."
+    echo "       compare:  diff \"$link\" \"$target\""
+    echo "       adopt:    rm \"$link\" && ln -s \"$target\" \"$link\""
+    return 0
+  fi
+
+  ln -s "$target" "$link"
+  echo "    linked: $link"
+}
+
+# Karabiner rewrites karabiner.json from its own UI, so a symlink into the repo
+# would be clobbered by any GUI change. Copy instead, and never overwrite: a
+# divergence is the user's edit, and losing it silently would be worse than
+# leaving the machine out of date.
+wire_karabiner() {
+  echo "==> karabiner"
+  local src="$WIRE_DIR/karabiner/karabiner.json"
+  local dst="$HOME/.config/karabiner/karabiner.json"
+  mkdir -p "$(dirname "$dst")"
+
+  if [ ! -e "$dst" ]; then
+    cp "$src" "$dst"
+    echo "    installed: $dst"
+    echo "    (Karabiner needs Input Monitoring permission on first run)"
+    return 0
+  fi
+  if cmp -s "$src" "$dst"; then
+    echo "    already current: $dst"
+    return 0
+  fi
+  echo "    !! $dst differs from the repo copy, and Karabiner owns this file."
+  echo "       compare:  diff \"$dst\" \"$src\""
+  echo "       apply:    cp \"$src\" \"$dst\""
+}
+
+# macOS binds ctrl+arrows to "Move left/right a space" by default, which
+# swallows the word-movement bindings before any app sees them. Only report it:
+# rewriting symbolichotkeys by hand is easy to corrupt and hard to undo.
+check_macos_shortcuts() {
+  [ "$OS" = macos ] || return 0
+  local enabled
+  enabled="$(python3 - <<'PYEOF' 2>/dev/null
+import plistlib, subprocess
+out = subprocess.run(['defaults','export','com.apple.symbolichotkeys','-'],
+                     capture_output=True).stdout
+hk = plistlib.loads(out).get('AppleSymbolicHotKeys', {})
+print(sum(1 for k in ('79','80','81','82') if hk.get(k, {}).get('enabled')))
+PYEOF
+)"
+  [ "${enabled:-0}" = "0" ] && return 0
+  echo "==> macOS shortcut conflict"
+  echo "    \"Move left/right a space\" is enabled and owns ctrl+arrows, which"
+  echo "    shadows the word-movement bindings. Disable it in:"
+  echo "      System Settings > Keyboard > Keyboard Shortcuts > Mission Control"
+  echo "    Safe to disable: AeroSpace does not use macOS Spaces."
+}
+
 # kitty reads ~/.config/kitty/kitty.conf and supports `include`, so the same
 # by-reference wiring works. Two includes rather than one: the shared file holds
 # font, colors and the tab bar, and the per-OS file holds window chrome and the
@@ -1000,10 +1082,16 @@ wire_gitconfig
 wire_nvim
 wire_kitty
 wire_claude
+if [ "$OS" = macos ]; then
+  wire_symlink "$WIRE_DIR/aerospace/aerospace.toml" \
+               "$HOME/.config/aerospace/aerospace.toml" "aerospace"
+  wire_karabiner
+fi
 echo
 setup_node
 setup_nvim_plugins
 echo
+check_macos_shortcuts
 record_provenance
 
 echo

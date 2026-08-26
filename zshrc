@@ -159,3 +159,21 @@ fi
 if command -v choros >/dev/null 2>&1; then
   eval "$(choros shell-init)"
 fi
+
+# --- Line editing -----------------------------------------------------------
+# kitty already sends these sequences; zsh binds nothing to them by default, so
+# ctrl+left/right did nothing at all before this. These mirror the GUI bindings
+# Karabiner installs, so word movement is the same keystroke everywhere -- with
+# the important exception that ctrl+c/a/e/w keep their POSIX meanings here,
+# which is exactly why Karabiner excludes terminals.
+bindkey "^[[1;5D" backward-word        # ctrl+left
+bindkey "^[[1;5C" forward-word         # ctrl+right
+bindkey "^[[1;3D" backward-word        # alt+left, the macOS convention
+bindkey "^[[1;3C" forward-word         # alt+right
+bindkey "^[[H"    beginning-of-line    # Home
+bindkey "^[[F"    end-of-line          # End
+bindkey "^[[1~"   beginning-of-line    # Home, alternate encoding
+bindkey "^[[4~"   end-of-line          # End, alternate encoding
+bindkey "^H"      backward-kill-word   # ctrl+backspace
+bindkey "^[[3;5~" kill-word            # ctrl+delete
+bindkey "^[[3~"   delete-char          # Delete

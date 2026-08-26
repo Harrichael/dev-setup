@@ -1,0 +1,136 @@
+# AeroSpace config. Symlinked from ~/.config/aerospace/aerospace.toml by
+# install.sh -- a symlink rather than an include because TOML has no include
+# directive and AeroSpace never rewrites this file.
+#
+# Modifier scheme, which the kitty and Karabiner configs also follow:
+#   cmd       workspaces and window-level navigation
+#   cmd+alt   layout, focus movement, monitors -- the second tier, kept off
+#             bare cmd because cmd+arrows is Back/Forward in every browser
+#   ctrl      in-app navigation (tabs) -- see kitty/macos.conf
+#   alt       left free; AeroSpace's own defaults use it and nothing here does
+
+config-version = 2
+start-at-login = true
+auto-reload-config = true
+
+persistent-workspaces = ['W', '1', '2', '3', '4', '5']
+
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+
+accordion-padding = 30
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+
+[key-mapping]
+preset = 'qwerty'
+
+[gaps]
+inner.horizontal = 8
+inner.vertical = 8
+outer.left = 8
+outer.right = 8
+outer.top = 8
+outer.bottom = 8
+
+[mode.main.binding]
+
+# --- Workspaces -------------------------------------------------------------
+cmd-1 = 'workspace 1'
+cmd-2 = 'workspace 2'
+cmd-3 = 'workspace 3'
+cmd-4 = 'workspace 4'
+cmd-5 = 'workspace 5'
+# Not cmd-w: that would shadow Close Window in every app.
+cmd-0 = 'workspace W'
+
+cmd-shift-1 = 'move-node-to-workspace 1'
+cmd-shift-2 = 'move-node-to-workspace 2'
+cmd-shift-3 = 'move-node-to-workspace 3'
+cmd-shift-4 = 'move-node-to-workspace 4'
+cmd-shift-5 = 'move-node-to-workspace 5'
+cmd-shift-0 = 'move-node-to-workspace W'
+
+# --- "Last used", at two scopes ---------------------------------------------
+# focus-back-and-forth is deliberately NOT used: it tracks the last focused
+# window globally, so from workspace 1 it will jump you to workspace 2. dfs-next
+# with explicit boundaries stays inside the workspace. The cost is that this is
+# positional cycling, not MRU -- identical to a toggle with two windows, a cycle
+# with three or more. AeroSpace has no workspace-scoped MRU.
+cmd-tab = 'focus dfs-next --boundaries workspace --boundaries-action wrap-around-the-workspace'
+cmd-alt-tab = 'focus dfs-prev --boundaries workspace --boundaries-action wrap-around-the-workspace'
+cmd-shift-tab = 'workspace-back-and-forth'
+
+# --- Focus and move ---------------------------------------------------------
+cmd-alt-left = 'focus left'
+cmd-alt-down = 'focus down'
+cmd-alt-up = 'focus up'
+cmd-alt-right = 'focus right'
+
+cmd-alt-shift-left = 'move left'
+cmd-alt-shift-down = 'move down'
+cmd-alt-shift-up = 'move up'
+cmd-alt-shift-right = 'move right'
+
+# --- Layout -----------------------------------------------------------------
+# cmd-alt-f, not cmd-f: cmd-f is Find everywhere.
+cmd-alt-f = 'fullscreen'
+cmd-alt-slash = 'layout tiles horizontal vertical'
+cmd-alt-comma = 'layout accordion horizontal vertical'
+cmd-alt-space = 'layout floating tiling'
+# Suspends tiling entirely, which is the closest thing to "float this whole
+# space". There is no per-workspace floating mode.
+cmd-alt-e = 'enable toggle'
+cmd-alt-b = 'balance-sizes'
+cmd-alt-r = 'flatten-workspace-tree'
+cmd-alt-minus = 'resize smart -50'
+cmd-alt-equal = 'resize smart +50'
+
+# --- Monitors ---------------------------------------------------------------
+cmd-alt-leftSquareBracket = 'focus-monitor prev'
+cmd-alt-rightSquareBracket = 'focus-monitor next'
+cmd-alt-shift-leftSquareBracket = 'move-node-to-monitor prev'
+cmd-alt-shift-rightSquareBracket = 'move-node-to-monitor next'
+
+# --- Launchers --------------------------------------------------------------
+# An AeroSpace binding is a global hotkey, so it is seen before the focused app
+# gets a chance -- which is why cmd-shift-i works here even though Chrome binds
+# it internally. `open -na ... --new-window` forces a genuinely new window
+# instead of activating an existing one.
+cmd-shift-i = 'exec-and-forget open -na "Google Chrome" --args --new-window'
+cmd-shift-c = 'exec-and-forget open -na kitty'
+cmd-shift-t = 'exec-and-forget open -na Terminal'
+
+# --- Service mode -----------------------------------------------------------
+cmd-alt-semicolon = 'mode service'
+
+[mode.service.binding]
+esc = ['reload-config', 'mode main']
+r = ['flatten-workspace-tree', 'mode main']
+f = ['layout floating tiling', 'mode main']
+backspace = ['close-all-windows-but-current', 'mode main']
+cmd-alt-shift-left = ['join-with left', 'mode main']
+cmd-alt-shift-down = ['join-with down', 'mode main']
+cmd-alt-shift-up = ['join-with up', 'mode main']
+cmd-alt-shift-right = ['join-with right', 'mode main']
+
+# =====================================================================
+# APP -> WORKSPACE RULES
+# =====================================================================
+
+# The secondary terminal is a scratch window, not part of the tiling layout.
+# Its transparency is a Terminal.app profile setting, not something AeroSpace
+# or this file controls.
+[[on-window-detected]]
+if.app-id = 'com.apple.Terminal'
+run = ['layout floating']
+
+[[on-window-detected]]
+if.app-id = 'com.microsoft.Outlook'
+run = ['move-node-to-workspace W']
+
+[[on-window-detected]]
+if.app-id = 'com.tinyspeck.slackmacgap'
+run = ['move-node-to-workspace W']

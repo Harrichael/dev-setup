@@ -149,3 +149,14 @@ if command -v choros >/dev/null 2>&1; then
   eval "$(choros shell-init)"
 fi
 
+# --- Line editing -----------------------------------------------------------
+# Mirrors the zshrc bindings so word movement is the same keystroke on both
+# platforms. readline binds \e[1;5D by default on many distros but not all.
+bind '"\e[1;5D": backward-word'    # ctrl+left
+bind '"\e[1;5C": forward-word'     # ctrl+right
+bind '"\e[1;3D": backward-word'    # alt+left
+bind '"\e[1;3C": forward-word'     # alt+right
+bind '"\e[H": beginning-of-line'
+bind '"\e[F": end-of-line'
+bind '"\C-h": backward-kill-word'  # ctrl+backspace
+bind '"\e[3;5~": kill-word'        # ctrl+delete

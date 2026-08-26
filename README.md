@@ -134,6 +134,8 @@ re-run with everything installed takes about a second.
 | Packages | macOS: `brew bundle`. Linux: prints the list to install yourself. |
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, and sets a per-workspace git identity. |
 | Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.local/share/dev-setup/tools/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
+| aerospace | macOS only. Symlinks `~/.config/aerospace/aerospace.toml` to this repo's copy. |
+| karabiner | macOS only. Copies `karabiner/karabiner.json` if absent; never overwrites a divergent one. |
 | kitty | Wires `~/.config/kitty/kitty.conf` to include this repo's shared + per-OS kitty config. |
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
 | dev-setup source | Pulls the pristine checkout the dotfiles point at, into `~/.local/share/dev-setup/self`. Runs before wiring so paths are recorded once. |
@@ -454,6 +456,46 @@ Colors are One Dark; Ghostty's own defaults pair One Dark's background
 (`#282c34`) with a Tomorrow Night ANSI palette, which is a mismatch worth not
 reproducing. `ctrl+cmd+,` reloads the config in place, `cmd+,` edits it, and
 `opt+cmd+,` dumps what actually got resolved.
+
+---
+
+## Keyboard scheme (macOS)
+
+`cmd` = spaces and windows · `cmd+alt` = layout · `ctrl` = inside the app.
+Full printable reference: **[docs/shortcuts.md](docs/shortcuts.md)**.
+
+Four layers cooperate, and the order they see a keystroke in matters:
+
+| Layer | File | Wiring |
+| --- | --- | --- |
+| Karabiner | `karabiner/karabiner.json` | **copy** — its UI rewrites the file |
+| AeroSpace | `aerospace/aerospace.toml` | **symlink** — TOML has no include |
+| kitty | `kitty/*.conf` | `include`, by reference |
+| shell | `zshrc` / `bashrc` | `source`, by reference |
+
+Karabiner sits lowest, then global hotkeys (AeroSpace), then the app. Three
+consequences worth knowing:
+
+- **An AeroSpace binding always wins over the focused app.** That's why
+  `cmd+shift+i` opens a new Chrome window instead of Chrome intercepting it.
+- **Chrome cannot have tab-by-number.** Karabiner would have to emit `cmd+N`,
+  and AeroSpace grabs `cmd+N` first. Chrome has no rebinding mechanism at all,
+  so `ctrl+Tab` is the answer there.
+- **Karabiner excludes terminals** via `frontmost_application_unless`, so
+  `ctrl+c` stays SIGINT and `ctrl+a` stays beginning-of-line in a shell.
+
+**`cmd+tab` is not MRU.** AeroSpace's `focus-back-and-forth` tracks the last
+focused window *globally* and will jump you to another workspace, which is the
+opposite of contained. So the binding is
+`focus dfs-next --boundaries workspace --boundaries-action wrap-around-the-workspace`
+— positional cycling that never leaves the space. With two windows it is a
+toggle; with three or more it is a cycle. AeroSpace has no workspace-scoped MRU.
+(`--boundaries` and `--wrap-around` are mutually exclusive; the containment
+needs the `--boundaries-action` form.)
+
+**One manual step:** disable *Move left/right a space* in System Settings →
+Keyboard → Keyboard Shortcuts → Mission Control. macOS binds those to
+`ctrl+arrows` and swallows word movement. `install.sh` checks and reminds.
 
 ---
 
