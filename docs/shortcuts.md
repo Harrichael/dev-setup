@@ -155,6 +155,13 @@ start. Word movement matches the GUI anyway:
 | `ctrl [` | It *is* Escape |
 | `ctrl w` `ctrl t` | Delete-word and transpose-char in the shell |
 
+## Required setup
+
+**Launch Karabiner-Elements once** and approve its system extension and Input
+Monitoring. It registers itself at login after that. Until then the `ctrl` text
+bindings and every `cmd+Globe` chord do nothing — and Karabiner also owns the
+Command/Globe swap, so it is not optional. `install.sh` checks and reminds.
+
 ## Required macOS setting
 
 **System Settings → Keyboard → Keyboard Shortcuts → Mission Control** — disable

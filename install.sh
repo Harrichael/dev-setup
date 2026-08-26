@@ -502,6 +502,25 @@ wire_karabiner() {
   echo "       apply:    cp \"$src\" \"$dst\""
 }
 
+# A config file is not a running daemon. Karabiner registers its daemon and
+# system extension via SMAppService at FIRST LAUNCH, after GUI approval, so
+# installing karabiner.json achieves nothing until someone opens the app once.
+# Without this check the whole keyboard layer sits inert and silent -- which is
+# exactly what happened here for several commits.
+check_karabiner_running() {
+  [ "$OS" = macos ] || return 0
+  [ -e "$HOME/.config/karabiner/karabiner.json" ] || return 0
+  pgrep -qf 'Karabiner-Elements|karabiner_grabber|karabiner_console_user_server' && return 0
+
+  echo "==> karabiner is not running"
+  echo "    karabiner.json is installed but nothing is applying it, so the"
+  echo "    ctrl-key text bindings and the cmd+Globe workspace chords all do"
+  echo "    nothing. Open Karabiner-Elements once and approve its system"
+  echo "    extension and Input Monitoring; it registers itself at login after"
+  echo "    that. It also owns the Command/Globe swap, so this is not optional:"
+  echo "      open -a Karabiner-Elements"
+}
+
 # macOS binds ctrl+arrows to "Move left/right a space" by default, which
 # swallows the word-movement bindings before any app sees them. Only report it:
 # rewriting symbolichotkeys by hand is easy to corrupt and hard to undo.
@@ -1100,6 +1119,7 @@ echo
 setup_node
 setup_nvim_plugins
 echo
+check_karabiner_running
 check_macos_shortcuts
 record_provenance
 
