@@ -162,10 +162,10 @@ fi
 
 # --- Line editing -----------------------------------------------------------
 # kitty already sends these sequences; zsh binds nothing to them by default, so
-# ctrl+left/right did nothing at all before this. These mirror the GUI bindings
-# Karabiner installs, so word movement is the same keystroke everywhere -- with
-# the important exception that ctrl+c/a/e/w keep their POSIX meanings here,
-# which is exactly why Karabiner excludes terminals.
+# ctrl+left/right did nothing at all before this. Deliberately independent of
+# whatever remaps keys at the GUI level: ctrl+c/a/e/w must keep their POSIX
+# meanings in a shell, so a terminal is always the wrong place to borrow the
+# GUI's ctrl conventions wholesale.
 bindkey "^[[1;5D" backward-word        # ctrl+left
 bindkey "^[[1;5C" forward-word         # ctrl+right
 bindkey "^[[1;3D" backward-word        # alt+left, the macOS convention

@@ -134,10 +134,9 @@ re-run with everything installed takes about a second.
 | Packages | macOS: `brew bundle`. Linux: prints the list to install yourself. |
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, and sets a per-workspace git identity. |
 | Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.local/share/dev-setup/tools/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
-| aerospace | macOS only. Symlinks `~/.config/aerospace/aerospace.toml` to this repo's copy. |
-| karabiner | macOS only. Merges the `dev-setup` **profile** into `karabiner.json`, leaving devices, other profiles and the selected profile untouched. |
 | kitty | Wires `~/.config/kitty/kitty.conf` to include this repo's shared + per-OS kitty config. |
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
+| hammerspoon | macOS only. Wires `~/.hammerspoon/init.lua` to `dofile` this repo's `hammerspoon/init.lua`. |
 | dev-setup source | Pulls the pristine checkout the dotfiles point at, into `~/.local/share/dev-setup/self`. Runs before wiring so paths are recorded once. |
 | Development clones | Interactive, optional. Clones dev-setup and the tool repos into a workspace registry so a choros can hack on them. Nothing is installed from these. |
 | Dotfiles | Wires `~/.zshrc` or `~/.bashrc`, `~/.gitconfig`, and `~/.config/nvim/init.lua`, creating each if absent. |
@@ -427,7 +426,7 @@ repo: `kitty/kitty.conf` for font, colors and the tab bar, and
 manager therefore tiles every tab as its own node and re-tiles the workspace on
 every tab switch. Measured with three tabs open:
 
-| Terminal | Windows AeroSpace sees | Native-tab selectors in the binary |
+| Terminal | Windows a tiling WM sees | Native-tab selectors in the binary |
 | --- | --- | --- |
 | Ghostty | 3 | 4 |
 | Alacritty | — | 8 |
@@ -442,8 +441,8 @@ config; only window chrome differs per OS. Not `ctrl+digit`: every one except
 `ctrl+1` and `ctrl+9` transmits a control code — `ctrl+3` is ESC, `ctrl+6` is
 vim's alternate-file, `ctrl+7` is undo in zsh and readline — and binding those
 would swallow them before the shell saw them. Using `alt` also leaves kitty's
-own split bindings (`cmd+enter`, `cmd+1..9`, `ctrl+shift+[`/`]`) untouched. `cmd+9` / `ctrl+alt+9` go to the *last* tab rather
-than the ninth, matching Ghostty. `alt+p` opens a fuzzy tab picker — not `ctrl+shift+p`, which is kitty's
+own split bindings (`cmd+enter`, `cmd+1..9`, `ctrl+shift+[`/`]`) untouched. `alt+9` goes to the *last* tab rather than the
+ninth, matching Ghostty. `alt+p` opens a fuzzy tab picker — not `ctrl+shift+p`, which is kitty's
 hints-kitten prefix.
 
 **Appearance notes.** The font is JetBrains Mono Nerd Font — specifically the
@@ -457,65 +456,52 @@ reproducing. `ctrl+cmd+,` reloads the config in place, `cmd+,` edits it, and
 
 ## Keyboard scheme (macOS)
 
-`cmd` = spaces and windows · `cmd+alt` = layout · `ctrl` = inside the app.
-Full printable reference: **[docs/shortcuts.md](docs/shortcuts.md)**.
+Two apps, and neither is a window manager:
 
-Four layers cooperate, and the order they see a keystroke in matters:
-
-| Layer | File | Wiring |
+| Tool | Job | Binds hotkeys? |
 | --- | --- | --- |
-| Karabiner | `karabiner/karabiner.json` | **profile merge** — its UI rewrites the file |
-| AeroSpace | `aerospace/aerospace.toml` | **symlink** — TOML has no include |
-| kitty | `kitty/*.conf` | `include`, by reference |
-| shell | `zshrc` / `bashrc` | `source`, by reference |
+| Hammerspoon | Linux-style `ctrl` editing keys, move-window-to-monitor | yes, `hammerspoon/init.lua` |
+| Mos | per-device scroll direction and smoothing | no |
 
-Karabiner sits lowest, then global hotkeys (AeroSpace), then the app. Three
-consequences worth knowing:
+**What was tried and rejected**, so it does not get re-litigated: AeroSpace
+(workspaces are per-monitor by design, and its back-and-forth is globally MRU),
+BetterStage (stages span monitors but it exposes no way to query which windows
+are on one), AltTab (MRU, but scopes only to native Spaces, which stages are
+not), and Karabiner (sat below every other layer as a virtual keyboard, making
+missing chords near-undebuggable, and broke Globe-double-tap dictation).
 
-- **An AeroSpace binding always wins over the focused app.** That's why
-  `cmd+shift+i` opens a new Chrome window instead of Chrome intercepting it.
-- **Chrome cannot have tab-by-number.** Karabiner would have to emit `cmd+N`,
-  and AeroSpace grabs `cmd+N` first. Chrome has no rebinding mechanism at all,
-  so `ctrl+Tab` is the answer there.
-- **Karabiner excludes terminals** via `frontmost_application_unless`, so
-  `ctrl+c` stays SIGINT and `ctrl+a` stays beginning-of-line in a shell.
+Hammerspoon can do all of it: `hs.window.filter.sortByFocusedLast` is MRU out of
+the box, moving 20 windows measures ~3 ms, and `hs.screen.watcher` /
+`hs.caffeinate.watcher` / `hs.settings` cover hotplug, wake and persistence. The
+window manager is being written against it rather than bought.
 
-**`cmd+tab` is not MRU.** AeroSpace's `focus-back-and-forth` tracks the last
-focused window *globally* and will jump you to another workspace, which is the
-opposite of contained. So the binding is
-`focus dfs-next --boundaries workspace --boundaries-action wrap-around-the-workspace`
-— positional cycling that never leaves the space. With two windows it is a
-toggle; with three or more it is a cycle. AeroSpace has no workspace-scoped MRU.
-(`--boundaries` and `--wrap-around` are mutually exclusive; the containment
-needs the `--boundaries-action` form.)
+**The ctrl layer.** macOS puts editing on `cmd` and word movement on `alt`;
+muscle memory from Linux puts both on `ctrl`. `hammerspoon/init.lua` rewrites the
+modifier, and which rewrites are safe in a terminal is a property of the **key**,
+not of the app:
 
-**`cmd+tab` requires Karabiner.** macOS consumes `cmd+tab` in the WindowServer,
-above global hotkeys, so AeroSpace never receives it — a binding there silently
-does nothing while the App Switcher jumps you across workspaces. Karabiner sits
-below the WindowServer and rewrites `cmd+tab` / `cmd+alt+tab` / `cmd+shift+tab`
-into `F18` / `F19` / `F20`, which is what AeroSpace actually binds. Pressing
-`F18` directly is the way to tell which layer is failing.
+| Keys | In a terminal | Everywhere else |
+| --- | --- | --- |
+| `ctrl+←/→`, `+shift` | rewritten to `alt+arrow` | word movement / selection |
+| `ctrl+a` | passes through as `beginning-of-line` | select all |
+| `ctrl+c/v/x` | never touched -- `cmd` keeps them | |
 
-**Bare `cmd+1..9` is left unbound**, so browser tab-by-number keeps working —
-and Karabiner additionally maps `ctrl+1..9` onto it for GUI apps. Workspace
-switching is `cmd+ctrl+N` (with `cmd+fn+N` aliased on top by Karabiner); moving a
-window there is `cmd+alt+N`.
+`ctrl+arrows` are safe in a terminal because `zshrc` binds *both* `^[[1;5D` and
+`^[[1;3D` to `backward-word`, so the rewrite is a no-op at a prompt -- and inside
+a TUI, which never reads zsh's keymap, `alt+arrow` is the convention that works.
+`ctrl+a` is not safe: `^A` is beginning-of-line, used constantly, and `cmd+a` in
+a terminal selects the whole scrollback.
 
-**Karabiner has to be launched by hand, once.** It registers its daemon and
-system extension via `SMAppService` on first run, after GUI approval, so a
-config file alone does nothing — `install.sh` cannot grant Input Monitoring.
-Until then the whole `ctrl` text layer and every `cmd+Globe` chord are inert,
-which `install.sh` now detects and reports. Karabiner also owns the
-Command/Globe swap: it grabs the keyboard below the layer where System Settings
-→ Modifier Keys applies, so that remap stops working the moment Karabiner runs
-and has to live in `simple_modifications` instead.
+`ctrl+c/v/x` are deliberately absent everywhere. `ctrl+c` is SIGINT, and a
+rewrite leaking into any unlisted app would swallow an interrupt silently.
 
-**Printing the reference:** `./docs/print-shortcuts.sh` (add `--pdf-only` to
-just build it). Renders the markdown to a two-column PDF via Chrome headless.
+**`cmd+alt+shift+←/→`** moves the focused window to the previous/next monitor.
+Nothing else provides this -- not macOS, and not any window manager tried here.
 
-**One manual step:** disable *Move left/right a space* in System Settings →
-Keyboard → Keyboard Shortcuts → Mission Control. macOS binds those to
-`ctrl+arrows` and swallows word movement. `install.sh` checks and reminds.
+**Required manual step:** disable *Move left/right a space* in System Settings >
+Keyboard > Keyboard Shortcuts > Mission Control. WindowServer handles those above
+every event tap, so while they are enabled `ctrl+arrows` never arrive at all.
+This costs native Spaces switching, which is the intended trade.
 
 ---
 

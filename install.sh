@@ -442,162 +442,6 @@ install_self() {
   fi
 }
 
-# Some configs cannot be wired by reference because their format has no include
-# directive. A symlink is the next best thing: the file still lives in the repo,
-# so a pull updates it. Only safe for configs the app never rewrites itself.
-wire_symlink() {
-  local target="$1" link="$2" label="$3"
-  echo "==> $label"
-  mkdir -p "$(dirname "$link")"
-
-  if [ -L "$link" ]; then
-    local current
-    current="$(readlink "$link")"
-    if [ "$current" = "$target" ]; then
-      echo "    already current: $link"
-      return 0
-    fi
-    # Re-point a link that names some older dev-setup checkout, but never one
-    # the user aimed somewhere else deliberately.
-    case "$current" in
-      *"/dev-setup/"*)
-        ln -sfn "$target" "$link"
-        echo "    relinked: $link"
-        echo "      was -> $current"
-        ;;
-      *)
-        echo "    !! $link is a symlink to somewhere else. Not touching it."
-        echo "       currently -> $current"
-        echo "       adopt:  ln -sfn \"$target\" \"$link\""
-        ;;
-    esac
-    return 0
-  fi
-
-  if [ -e "$link" ]; then
-    if cmp -s "$link" "$target"; then
-      rm -f "$link"
-      ln -s "$target" "$link"
-      echo "    replaced identical file with a symlink: $link"
-      return 0
-    fi
-    echo "    !! $link exists and differs from the repo copy. Not touching it."
-    echo "       compare:  diff \"$link\" \"$target\""
-    echo "       adopt:    rm \"$link\" && ln -s \"$target\" \"$link\""
-    return 0
-  fi
-
-  ln -s "$target" "$link"
-  echo "    linked: $link"
-}
-
-# Karabiner rewrites karabiner.json from its own UI -- it records devices,
-# other profiles, and which profile is selected -- so neither a symlink nor a
-# whole-file copy is safe. What this repo owns is one profile, by name. So merge
-# that profile in and leave everything else exactly as Karabiner left it.
-#
-# This matters more than it looks: the Command/Globe swap lives in that profile,
-# so the file is guaranteed to be touched by the UI eventually.
-wire_karabiner() {
-  echo "==> karabiner"
-  local src="$WIRE_DIR/karabiner/karabiner.json"
-  local dst="$HOME/.config/karabiner/karabiner.json"
-  mkdir -p "$(dirname "$dst")"
-
-  if [ ! -e "$dst" ]; then
-    cp "$src" "$dst"
-    echo "    installed: $dst"
-    return 0
-  fi
-
-  SRC="$src" DST="$dst" python3 <<'PYEOF'
-import json, os, shutil, sys
-
-src, dst = os.environ['SRC'], os.environ['DST']
-repo = json.load(open(src))
-try:
-    live = json.load(open(dst))
-except Exception as e:
-    print(f"    !! {dst} is not valid JSON ({e}); not touching it")
-    sys.exit(0)
-
-want = repo['profiles'][0]
-name = want['name']
-live.setdefault('profiles', [])
-
-for i, p in enumerate(live['profiles']):
-    if p.get('name') == name:
-        if p == want or {k: v for k, v in p.items() if k != 'selected'} == \
-                        {k: v for k, v in want.items() if k != 'selected'}:
-            print(f"    already current: {dst}")
-            sys.exit(0)
-        # Preserve which profile the user has selected; replace the rest.
-        merged = dict(want)
-        merged['selected'] = p.get('selected', want.get('selected', False))
-        live['profiles'][i] = merged
-        break
-else:
-    live['profiles'].append(want)
-
-shutil.copy2(dst, dst + '.bak')
-with open(dst, 'w') as f:
-    json.dump(live, f, indent=2)
-    f.write('\n')
-print(f"    merged profile '{name}' into {dst}")
-print(f"    (previous file kept at {os.path.basename(dst)}.bak)")
-PYEOF
-}
-
-# A config file is not a running daemon. Karabiner registers its daemon and
-# system extension via SMAppService at FIRST LAUNCH, after GUI approval, so
-# installing karabiner.json achieves nothing until someone opens the app once.
-# Without this check the whole keyboard layer sits inert and silent -- which is
-# exactly what happened here for several commits.
-check_karabiner_running() {
-  [ "$OS" = macos ] || return 0
-  [ -e "$HOME/.config/karabiner/karabiner.json" ] || return 0
-  pgrep -qf 'Karabiner-Elements|karabiner_grabber|karabiner_console_user_server' && return 0
-
-  echo "==> karabiner is not running"
-  echo "    karabiner.json is installed but nothing is applying it, so the"
-  echo "    ctrl-key text bindings and the cmd+Globe workspace chords all do"
-  echo "    nothing. Open Karabiner-Elements once and approve its system"
-  echo "    extension and Input Monitoring; it registers itself at login after"
-  echo "    that. It also owns the Command/Globe swap, so this is not optional:"
-  echo "      open -a Karabiner-Elements"
-}
-
-# macOS binds ctrl+arrows to "Move left/right a space" by default, which
-# swallows the word-movement bindings before any app sees them. Only report it:
-# rewriting symbolichotkeys by hand is easy to corrupt and hard to undo.
-check_macos_shortcuts() {
-  [ "$OS" = macos ] || return 0
-  local enabled
-  enabled="$(python3 - <<'PYEOF' 2>/dev/null
-import plistlib, subprocess
-out = subprocess.run(['defaults','export','com.apple.symbolichotkeys','-'],
-                     capture_output=True).stdout
-hk = plistlib.loads(out).get('AppleSymbolicHotKeys', {})
-# An ABSENT entry means "system default", and the default for 79-82 is
-# ENABLED. Counting only present-and-enabled keys would pass silently on a
-# fresh machine while Mission Control still owned ctrl+arrows.
-n = 0
-for k in ('79', '80', '81', '82'):
-    e = hk.get(k)
-    if e is None or e.get('enabled'):
-        n += 1
-print(n)
-PYEOF
-)"
-  # No output means the probe failed; warn rather than assume all is well.
-  [ "${enabled:-4}" = "0" ] && return 0
-  echo "==> macOS shortcut conflict"
-  echo "    \"Move left/right a space\" is enabled and owns ctrl+arrows, which"
-  echo "    shadows the word-movement bindings. Disable it in:"
-  echo "      System Settings > Keyboard > Keyboard Shortcuts > Mission Control"
-  echo "    Safe to disable: AeroSpace does not use macOS Spaces."
-}
-
 # kitty reads ~/.config/kitty/kitty.conf and supports `include`, so the same
 # by-reference wiring works. Two includes rather than one: the shared file holds
 # font, colors, the tab bar and the tab keybindings (all of which are valid on
@@ -609,6 +453,22 @@ wire_kitty() {
              "include $WIRE_DIR/kitty/kitty.conf
 include $WIRE_DIR/kitty/$OS.conf" \
              "$WIRE_DIR/kitty/kitty.conf"
+}
+
+# Hammerspoon owns the keyboard layer (Linux-style ctrl bindings) and the window
+# management. Lua has no include directive, so the wired block is a dofile rather
+# than a source-alike -- same by-reference intent, different spelling.
+#
+# GOTCHA worth remembering: after granting Hammerspoon any macOS permission you
+# must QUIT AND RELAUNCH the app. "Reload Config" re-runs the Lua in the same
+# process, and AXIsProcessTrusted() caches its answer per process, so a reload
+# keeps reporting the stale value and the config looks broken when it is not.
+wire_hammerspoon() {
+  [ "$OS" = macos ] || return 0
+  echo "==> hammerspoon"
+  wire_block "$HOME/.hammerspoon/init.lua" "--" \
+             "dofile(\"$WIRE_DIR/hammerspoon/init.lua\")" \
+             "$WIRE_DIR/hammerspoon/init.lua"
 }
 
 # Claude Code reads ~/.claude/CLAUDE.md as global instructions. Wire it by
@@ -653,6 +513,12 @@ list_direct_clones() {
 # identity lives with the workspace, so it never lands in this public repo.
 setup_workspace_identity() {
   local root="$1" cfg name email cur_name cur_email
+  # Strip a trailing slash before anything interpolates it. gitdir: patterns are
+  # matched literally, so "gitdir:$root/" on a root that already ended in "/"
+  # produced "gitdir:/path/psrc//" -- which silently matches nothing, leaving
+  # every repo under that root with no identity and commits authored to a
+  # hostname fallback. Callers pass roots both ways, so normalise here.
+  root="${root%/}"
   cfg="$root/.choros-config/gitconfig"
 
   cur_name=""; cur_email=""
@@ -1156,17 +1022,11 @@ wire_gitconfig
 wire_nvim
 wire_kitty
 wire_claude
-if [ "$OS" = macos ]; then
-  wire_symlink "$WIRE_DIR/aerospace/aerospace.toml" \
-               "$HOME/.config/aerospace/aerospace.toml" "aerospace"
-  wire_karabiner
-fi
+wire_hammerspoon
 echo
 setup_node
 setup_nvim_plugins
 echo
-check_karabiner_running
-check_macos_shortcuts
 record_provenance
 
 echo

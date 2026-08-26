@@ -60,3 +60,10 @@
   thus meaning its contained to behind the interface rather than leaking into
   the app as a whole, the unit is effectively singular. Per YAGNI, split later
   when a real caller forces the issue.
+
+## Agentic Scope
+
+- Do not use git tools, like add commit push merge etc, without explicit
+  permission.
+- If asked to resolve git merge, investigate the intention of both branches and
+  resolve the files, but do not git add or merge.
