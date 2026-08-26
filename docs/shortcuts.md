@@ -15,13 +15,18 @@ macOS. Generated from `aerospace/aerospace.toml`, `kitty/`, `karabiner/` and
 
 | Key | Does |
 | --- | --- |
-| `cmd 1`…`cmd 5` | Go to workspace 1–5 |
-| `cmd 0` | Go to workspace **W** (Work) |
-| `cmd shift 1`…`5` | Send window to workspace 1–5 |
-| `cmd shift 0` | Send window to workspace W |
+| `cmd shift 1`…`5` | Go to workspace 1–5 |
+| `cmd shift w` | Go to workspace **W** (Work) |
+| `cmd alt shift 1`…`5` | Send window to workspace 1–5 |
+| `cmd alt shift w` | Send window to workspace W |
 | `cmd tab` | Next window **in this space** (cycles, never leaves) |
 | `cmd alt tab` | Previous window in this space |
 | `cmd shift tab` | Back to the **previous workspace** |
+
+`cmd 1`…`cmd 9` is left free on purpose, so **browser tab-by-number works
+again**. The three `cmd tab` chords are rewritten by Karabiner into `F18`/`F19`/
+`F20`, because macOS consumes `cmd+tab` above global hotkeys — pressing `F18`
+directly does the same thing, which is how to tell the layers apart.
 
 ## cmd+alt — layout and movement (AeroSpace)
 
@@ -73,7 +78,7 @@ Always a **new window**, never "go to the existing one".
 | --- | --- |
 | `ctrl tab` / `ctrl shift tab` | Next / previous tab |
 | `cmd ←` / `cmd →` | Back / forward |
-| `cmd 1`…`9` | ⚠️ **Taken by AeroSpace** — no tab-by-number in Chrome |
+| `cmd 1`…`cmd 8`, `cmd 9` | Go to tab N / last tab — works, AeroSpace leaves these free |
 
 ## Text editing — Linux-style (Karabiner)
 
@@ -114,6 +119,7 @@ start. Word movement matches the GUI anyway:
 | Key | Left alone because |
 | --- | --- |
 | `cmd w` | Close Window, in every app |
+| `cmd 1`…`cmd 9` | So browser tab-by-number keeps working |
 | `cmd f` | Find, in every app |
 | `cmd h` `cmd j` `cmd k` `cmd l` | Hide, Downloads, Search, **Address bar** |
 | `cmd ←` `cmd →` | Back / Forward in browsers |
@@ -130,6 +136,8 @@ word movement before any app sees it. Safe: AeroSpace does not use macOS Spaces.
 
 - **No workspace-scoped MRU.** `cmd tab` cycles in tree order. With two windows
   that is a toggle; with three or more it is a cycle, not "last used".
-- **No tab-by-number in Chrome.** `cmd 1`…`9` belongs to AeroSpace, and Chrome
-  has no rebinding of any kind. Use `ctrl tab`.
+- **`cmd+tab` depends on Karabiner.** macOS consumes it in the WindowServer,
+  which sits above global hotkeys, so AeroSpace cannot see it directly. If
+  Karabiner is disabled or lacks Input Monitoring permission, `cmd+tab` reverts
+  to the macOS App Switcher and will jump you across workspaces.
 - **Terminal.app transparency** is a Terminal profile setting, set by hand.

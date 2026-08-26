@@ -493,6 +493,16 @@ toggle; with three or more it is a cycle. AeroSpace has no workspace-scoped MRU.
 (`--boundaries` and `--wrap-around` are mutually exclusive; the containment
 needs the `--boundaries-action` form.)
 
+**`cmd+tab` requires Karabiner.** macOS consumes `cmd+tab` in the WindowServer,
+above global hotkeys, so AeroSpace never receives it — a binding there silently
+does nothing while the App Switcher jumps you across workspaces. Karabiner sits
+below the WindowServer and rewrites `cmd+tab` / `cmd+alt+tab` / `cmd+shift+tab`
+into `F18` / `F19` / `F20`, which is what AeroSpace actually binds. Pressing
+`F18` directly is the way to tell which layer is failing.
+
+**Bare `cmd+1..9` is left unbound**, so browser tab-by-number keeps working.
+Workspace switching is `cmd+shift+N`; moving a window there is `cmd+alt+shift+N`.
+
 **One manual step:** disable *Move left/right a space* in System Settings →
 Keyboard → Keyboard Shortcuts → Mission Control. macOS binds those to
 `ctrl+arrows` and swallows word movement. `install.sh` checks and reminds.

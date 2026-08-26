@@ -16,6 +16,61 @@
         },
         "rules": [
           {
+            "description": "cmd+tab -> F18/F19/F20 for AeroSpace. macOS consumes cmd+tab in the WindowServer, above global hotkeys, so AeroSpace never sees it. Karabiner is below the WindowServer. No app exclusions: this is window management, wanted everywhere.",
+            "manipulators": [
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "tab",
+                  "modifiers": {
+                    "mandatory": [
+                      "command",
+                      "shift"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "f20"
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "tab",
+                  "modifiers": {
+                    "mandatory": [
+                      "command",
+                      "option"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "f19"
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "tab",
+                  "modifiers": {
+                    "mandatory": [
+                      "command"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "f18"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "description": "ctrl+arrows = word movement (shift selects). Excludes terminals.",
             "manipulators": [
               {
