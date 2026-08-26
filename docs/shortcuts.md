@@ -16,29 +16,24 @@ macOS. Generated from `aerospace/aerospace.toml`, `kitty/`, `karabiner/` and
 | Key | Does |
 | --- | --- |
 | `cmd fn 1`…`5` | Go to workspace 1–5 |
-| `cmd fn w` | Go to workspace **W** (Work) |
+| `cmd fn 0` | Go to workspace **W** (Work) |
 | `cmd fn tab` | Back to the **previous workspace** |
 | `cmd alt 1`…`5` | Send window to workspace 1–5 |
-| `cmd alt w` | Send window to workspace W |
+| `cmd alt 0` | Send window to workspace W |
 | `alt tab` | Next window **in this space** (cycles, never leaves) |
 | `alt shift tab` | Previous window in this space |
-| `alt backtick` | Back to the previous workspace |
 
-**Two paths on purpose.** AeroSpace cannot bind `fn`/Globe at all — it only
-understands `cmd`, `alt`, `ctrl`, `shift`. So the real bindings are `cmd+ctrl+N`,
-`cmd+ctrl+w` and `alt+backtick`, and Karabiner aliases `cmd+fn+…` on top of
-them. If Karabiner is off, use the native chords below and nothing is lost.
-
-| Native fallback | Same as |
-| --- | --- |
-| `cmd ctrl 1`…`5` | `cmd fn 1`…`5` |
-| `cmd ctrl w` | `cmd fn w` |
-| `alt backtick` | `cmd fn tab` |
-| `F18` / `F19` / `F20` | cycle next / cycle prev / last workspace |
+One chord per action. `cmd+fn+…` is Karabiner rewriting `cmd+ctrl+…`, which is
+what AeroSpace actually binds — if you ever need to bypass Karabiner, substitute
+`cmd+ctrl` for `cmd+fn` and `F20` for `cmd+fn+tab`.
 
 `cmd 1`…`cmd 9` is left free on purpose, so **browser tab-by-number works**.
 `cmd+tab` is unusable for window management: macOS consumes it above global
 hotkeys, so AeroSpace never sees it.
+
+> **Not `cmd+fn+w` for workspace W.** With Karabiner off, `fn` is transparent and
+> that chord degrades to a bare `cmd+w`, closing the focused tab. `cmd+fn+0`
+> degrades to "reset zoom" instead.
 
 ## cmd+alt — layout and movement (AeroSpace)
 
@@ -49,7 +44,7 @@ hotkeys, so AeroSpace never sees it.
 | `cmd alt f` | Fullscreen (fill the space) |
 | `cmd alt /` | Rotate split — horizontal ↔ vertical |
 | `cmd alt ,` | Accordion (stacked) layout |
-| `alt space` | Float / unfloat **this window** |
+| `alt space` | Float / unfloat **this window** (costs Option+Space, the non-breaking space) |
 | `cmd alt e` | Suspend tiling — floats **everything** |
 | `cmd alt b` | Balance sizes |
 | `cmd alt r` | Reset a mangled layout |
@@ -142,6 +137,8 @@ start. Word movement matches the GUI anyway:
 | kitty split-close on `cmd shift d` | Nothing — but it is *not* "split down"; it closes |
 | Word's **Apply Heading 1/2/3** (`cmd alt 1/2/3`) | Send-window-to-workspace |
 | `alt tab` inside remote-desktop / VM sessions | Captured globally; AeroSpace has no per-app exceptions |
+| Option+Space (non-breaking space) | `alt space` float toggle |
+| `¡™£¢∞§¶•ª` in kitty | `alt 1`…`alt 9` tab keys |
 | bare `ctrl h` (was delete-char) | `ctrl backspace` — they are the same byte, 0x08 |
 
 `cmd alt i` and `cmd alt j` still open DevTools.
@@ -181,10 +178,16 @@ word movement before any app sees it. Safe: AeroSpace does not use macOS Spaces.
 - **`cmd+tab` is not used at all.** macOS consumes it in the WindowServer, above
   global hotkeys, so AeroSpace never receives it — the App Switcher appears and
   jumps you across workspaces regardless of what is bound.
-- **Karabiner must own the Command/Globe swap.** Karabiner grabs the keyboard
-  below the layer where System Settings → Modifier Keys applies, so that swap
-  stops working the moment Karabiner runs. It is therefore set in
-  `karabiner/karabiner.json` as a `simple_modifications` pair instead.
+- **The Command/Globe swap must live in exactly one place.** It is in
+  `karabiner/karabiner.json` as a `simple_modifications` pair, and the System
+  Settings copy has to be **deleted** when Karabiner is adopted. Karabiner 16's
+  virtual keyboard reports a real Apple keyboard's vendor/product ID, so System
+  Settings applies to Karabiner's *output* too — leaving both in place re-swaps
+  every `command` Karabiner emits back into `fn`, breaking most rules.
+- **Globe double-tap for dictation is gone**, and cannot come back: the shortcut
+  fires on the `fn` modifier, and the physical Globe key now emits Command.
+  Retarget it to "Press Control twice" in System Settings → Keyboard →
+  Dictation, since Control is the one modifier the swap leaves alone.
 - **Terminal exclusions are by bundle ID.** 17 are listed, covering the common
   terminals plus editors with embedded ones (VS Code, Cursor, JetBrains, Zed,
   Emacs, MacVim). Anything not on the list gets `ctrl+c` as copy inside its

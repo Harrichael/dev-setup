@@ -53,7 +53,9 @@ cmd-ctrl-2 = 'workspace 2'
 cmd-ctrl-3 = 'workspace 3'
 cmd-ctrl-4 = 'workspace 4'
 cmd-ctrl-5 = 'workspace 5'
-cmd-ctrl-w = 'workspace W'
+# NOT w: with Karabiner off, cmd+fn+w degrades to a bare cmd+w and closes
+# the focused tab. cmd+0 degrades to "reset zoom", which is harmless.
+cmd-ctrl-0 = 'workspace W'
 
 # These shadow Microsoft Word's Apply-Heading-1/2/3 styles, which is a real
 # cost if Word is in use. AeroSpace has no per-app binding conditions, so
@@ -63,7 +65,7 @@ cmd-alt-2 = 'move-node-to-workspace 2'
 cmd-alt-3 = 'move-node-to-workspace 3'
 cmd-alt-4 = 'move-node-to-workspace 4'
 cmd-alt-5 = 'move-node-to-workspace 5'
-cmd-alt-w = 'move-node-to-workspace W'
+cmd-alt-0 = 'move-node-to-workspace W'
 
 # --- "Last used", at two scopes ---------------------------------------------
 # alt+tab and alt+backtick are NOT claimed by macOS, so these work with no
@@ -83,10 +85,10 @@ cmd-alt-w = 'move-node-to-workspace W'
 # F-keys if you need it forwarded.
 alt-tab = 'focus dfs-next --boundaries workspace --boundaries-action wrap-around-the-workspace'
 alt-shift-tab = 'focus dfs-prev --boundaries workspace --boundaries-action wrap-around-the-workspace'
-alt-backtick = 'workspace-back-and-forth'
 
-f18 = 'focus dfs-next --boundaries workspace --boundaries-action wrap-around-the-workspace'
-f19 = 'focus dfs-prev --boundaries workspace --boundaries-action wrap-around-the-workspace'
+# Only F20 is bound, as the target of Karabiner's cmd+fn+tab. F18/F19 were
+# targets for a cmd+tab rewrite that was abandoned, so nothing emitted them and
+# no laptop keyboard has those keys -- dead bindings, removed.
 f20 = 'workspace-back-and-forth'
 
 # --- Focus and move ---------------------------------------------------------
