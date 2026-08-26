@@ -49,7 +49,7 @@ hotkeys, so AeroSpace never sees it.
 | `cmd alt f` | Fullscreen (fill the space) |
 | `cmd alt /` | Rotate split — horizontal ↔ vertical |
 | `cmd alt ,` | Accordion (stacked) layout |
-| `cmd alt space` | Float / unfloat **this window** |
+| `alt space` | Float / unfloat **this window** |
 | `cmd alt e` | Suspend tiling — floats **everything** |
 | `cmd alt b` | Balance sizes |
 | `cmd alt r` | Reset a mangled layout |
