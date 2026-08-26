@@ -164,55 +164,275 @@
             ]
           },
           {
-            "description": "cmd+tab -> F18/F19/F20 for AeroSpace. macOS consumes cmd+tab in the WindowServer, above global hotkeys, so AeroSpace never sees it. Karabiner is below the WindowServer. No app exclusions: this is window management, wanted everywhere.",
+            "description": "ctrl+1..9 = go to tab N in GUI apps. Excludes terminals, where ctrl+digit transmits control codes (ctrl+3 is ESC).",
             "manipulators": [
               {
                 "type": "basic",
                 "from": {
-                  "key_code": "tab",
+                  "key_code": "1",
                   "modifiers": {
                     "mandatory": [
-                      "command",
-                      "shift"
+                      "control"
                     ]
                   }
                 },
                 "to": [
                   {
-                    "key_code": "f20"
-                  }
-                ]
-              },
-              {
-                "type": "basic",
-                "from": {
-                  "key_code": "tab",
-                  "modifiers": {
-                    "mandatory": [
-                      "command",
-                      "option"
-                    ]
-                  }
-                },
-                "to": [
-                  {
-                    "key_code": "f19"
-                  }
-                ]
-              },
-              {
-                "type": "basic",
-                "from": {
-                  "key_code": "tab",
-                  "modifiers": {
-                    "mandatory": [
+                    "key_code": "1",
+                    "modifiers": [
                       "command"
                     ]
                   }
+                ],
+                "conditions": [
+                  {
+                    "type": "frontmost_application_unless",
+                    "bundle_identifiers": [
+                      "^net\\.kovidgoyal\\.kitty$",
+                      "^com\\.apple\\.Terminal$",
+                      "^com\\.mitchellh\\.ghostty$",
+                      "^com\\.googlecode\\.iterm2$"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "2",
+                  "modifiers": {
+                    "mandatory": [
+                      "control"
+                    ]
+                  }
                 },
                 "to": [
                   {
-                    "key_code": "f18"
+                    "key_code": "2",
+                    "modifiers": [
+                      "command"
+                    ]
+                  }
+                ],
+                "conditions": [
+                  {
+                    "type": "frontmost_application_unless",
+                    "bundle_identifiers": [
+                      "^net\\.kovidgoyal\\.kitty$",
+                      "^com\\.apple\\.Terminal$",
+                      "^com\\.mitchellh\\.ghostty$",
+                      "^com\\.googlecode\\.iterm2$"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "3",
+                  "modifiers": {
+                    "mandatory": [
+                      "control"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "3",
+                    "modifiers": [
+                      "command"
+                    ]
+                  }
+                ],
+                "conditions": [
+                  {
+                    "type": "frontmost_application_unless",
+                    "bundle_identifiers": [
+                      "^net\\.kovidgoyal\\.kitty$",
+                      "^com\\.apple\\.Terminal$",
+                      "^com\\.mitchellh\\.ghostty$",
+                      "^com\\.googlecode\\.iterm2$"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "4",
+                  "modifiers": {
+                    "mandatory": [
+                      "control"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "4",
+                    "modifiers": [
+                      "command"
+                    ]
+                  }
+                ],
+                "conditions": [
+                  {
+                    "type": "frontmost_application_unless",
+                    "bundle_identifiers": [
+                      "^net\\.kovidgoyal\\.kitty$",
+                      "^com\\.apple\\.Terminal$",
+                      "^com\\.mitchellh\\.ghostty$",
+                      "^com\\.googlecode\\.iterm2$"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "5",
+                  "modifiers": {
+                    "mandatory": [
+                      "control"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "5",
+                    "modifiers": [
+                      "command"
+                    ]
+                  }
+                ],
+                "conditions": [
+                  {
+                    "type": "frontmost_application_unless",
+                    "bundle_identifiers": [
+                      "^net\\.kovidgoyal\\.kitty$",
+                      "^com\\.apple\\.Terminal$",
+                      "^com\\.mitchellh\\.ghostty$",
+                      "^com\\.googlecode\\.iterm2$"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "6",
+                  "modifiers": {
+                    "mandatory": [
+                      "control"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "6",
+                    "modifiers": [
+                      "command"
+                    ]
+                  }
+                ],
+                "conditions": [
+                  {
+                    "type": "frontmost_application_unless",
+                    "bundle_identifiers": [
+                      "^net\\.kovidgoyal\\.kitty$",
+                      "^com\\.apple\\.Terminal$",
+                      "^com\\.mitchellh\\.ghostty$",
+                      "^com\\.googlecode\\.iterm2$"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "7",
+                  "modifiers": {
+                    "mandatory": [
+                      "control"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "7",
+                    "modifiers": [
+                      "command"
+                    ]
+                  }
+                ],
+                "conditions": [
+                  {
+                    "type": "frontmost_application_unless",
+                    "bundle_identifiers": [
+                      "^net\\.kovidgoyal\\.kitty$",
+                      "^com\\.apple\\.Terminal$",
+                      "^com\\.mitchellh\\.ghostty$",
+                      "^com\\.googlecode\\.iterm2$"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "8",
+                  "modifiers": {
+                    "mandatory": [
+                      "control"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "8",
+                    "modifiers": [
+                      "command"
+                    ]
+                  }
+                ],
+                "conditions": [
+                  {
+                    "type": "frontmost_application_unless",
+                    "bundle_identifiers": [
+                      "^net\\.kovidgoyal\\.kitty$",
+                      "^com\\.apple\\.Terminal$",
+                      "^com\\.mitchellh\\.ghostty$",
+                      "^com\\.googlecode\\.iterm2$"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "basic",
+                "from": {
+                  "key_code": "9",
+                  "modifiers": {
+                    "mandatory": [
+                      "control"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "9",
+                    "modifiers": [
+                      "command"
+                    ]
+                  }
+                ],
+                "conditions": [
+                  {
+                    "type": "frontmost_application_unless",
+                    "bundle_identifiers": [
+                      "^net\\.kovidgoyal\\.kitty$",
+                      "^com\\.apple\\.Terminal$",
+                      "^com\\.mitchellh\\.ghostty$",
+                      "^com\\.googlecode\\.iterm2$"
+                    ]
                   }
                 ]
               }
@@ -290,7 +510,7 @@
             ]
           },
           {
-            "description": "Home/End = line start/end, ctrl+Home/End = document. Excludes terminals.",
+            "description": "Home/End = line start/end, ctrl+Home/End = document. Excludes terminals AND browsers -- cmd+arrows is Back/Forward there, so Home would navigate back.",
             "manipulators": [
               {
                 "type": "basic",
@@ -318,7 +538,10 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^com\\.google\\.Chrome$",
+                      "^com\\.apple\\.Safari$",
+                      "^org\\.mozilla\\.firefox$"
                     ]
                   }
                 ]
@@ -349,7 +572,10 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^com\\.google\\.Chrome$",
+                      "^com\\.apple\\.Safari$",
+                      "^org\\.mozilla\\.firefox$"
                     ]
                   }
                 ]
@@ -382,7 +608,10 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^com\\.google\\.Chrome$",
+                      "^com\\.apple\\.Safari$",
+                      "^org\\.mozilla\\.firefox$"
                     ]
                   }
                 ]
@@ -415,7 +644,10 @@
                       "^net\\.kovidgoyal\\.kitty$",
                       "^com\\.apple\\.Terminal$",
                       "^com\\.mitchellh\\.ghostty$",
-                      "^com\\.googlecode\\.iterm2$"
+                      "^com\\.googlecode\\.iterm2$",
+                      "^com\\.google\\.Chrome$",
+                      "^com\\.apple\\.Safari$",
+                      "^org\\.mozilla\\.firefox$"
                     ]
                   }
                 ]
@@ -741,7 +973,29 @@
             ]
           }
         ]
-      }
+      },
+      "simple_modifications": [
+        {
+          "from": {
+            "key_code": "fn"
+          },
+          "to": [
+            {
+              "key_code": "left_command"
+            }
+          ]
+        },
+        {
+          "from": {
+            "key_code": "left_command"
+          },
+          "to": [
+            {
+              "key_code": "fn"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

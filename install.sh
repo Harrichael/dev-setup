@@ -513,10 +513,19 @@ import plistlib, subprocess
 out = subprocess.run(['defaults','export','com.apple.symbolichotkeys','-'],
                      capture_output=True).stdout
 hk = plistlib.loads(out).get('AppleSymbolicHotKeys', {})
-print(sum(1 for k in ('79','80','81','82') if hk.get(k, {}).get('enabled')))
+# An ABSENT entry means "system default", and the default for 79-82 is
+# ENABLED. Counting only present-and-enabled keys would pass silently on a
+# fresh machine while Mission Control still owned ctrl+arrows.
+n = 0
+for k in ('79', '80', '81', '82'):
+    e = hk.get(k)
+    if e is None or e.get('enabled'):
+        n += 1
+print(n)
 PYEOF
 )"
-  [ "${enabled:-0}" = "0" ] && return 0
+  # No output means the probe failed; warn rather than assume all is well.
+  [ "${enabled:-4}" = "0" ] && return 0
   echo "==> macOS shortcut conflict"
   echo "    \"Move left/right a space\" is enabled and owns ctrl+arrows, which"
   echo "    shadows the word-movement bindings. Disable it in:"
@@ -526,9 +535,9 @@ PYEOF
 
 # kitty reads ~/.config/kitty/kitty.conf and supports `include`, so the same
 # by-reference wiring works. Two includes rather than one: the shared file holds
-# font, colors and the tab bar, and the per-OS file holds window chrome and the
-# tab keybindings, which cannot be shared (cmd does not exist on Linux, and
-# ctrl+shift+N is already taken there by kitty's own split navigation).
+# font, colors, the tab bar and the tab keybindings (all of which are valid on
+# both platforms), and the per-OS file holds window chrome -- decorations and
+# background blur, which differ.
 wire_kitty() {
   echo "==> kitty"
   wire_block "$HOME/.config/kitty/kitty.conf" "#" \

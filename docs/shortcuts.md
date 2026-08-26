@@ -70,18 +70,23 @@ Always a **new window**, never "go to the existing one".
 
 ## ctrl — inside the app
 
-**kitty**
+**kitty** — tabs are on `alt`, because every `ctrl+digit` except 1 and 9 sends a
+real control code (`ctrl+3` is ESC, `ctrl+7` is undo).
 
 | Key | Does |
 | --- | --- |
-| `ctrl 1`…`ctrl 8` | Go to tab 1–8 |
-| `ctrl 9` | **Last** tab |
+| `alt 1`…`alt 8` | Go to tab 1–8 |
+| `alt 9` | Last tab |
+| `alt w` | Close tab |
+| `alt p` | Fuzzy tab picker |
 | `ctrl tab` / `ctrl shift tab` | Next / previous tab |
-| `ctrl shift w` | Close tab |
-| `ctrl shift p` | Fuzzy tab picker |
-| `cmd t` / `cmd w` | New / close tab (kitty defaults) |
-| `cmd d` / `cmd shift d` | Split right / down |
-| `cmd alt ← ↓ ↑ →` | Move between splits |
+| `cmd t` | New tab |
+| `cmd w` | Close tab |
+| `cmd enter` | New **split** |
+| `ctrl shift [` / `ctrl shift ]` | Previous / next split |
+| `cmd 1`…`cmd 9` | Go to split 1–9 |
+| `cmd shift d` | ⚠️ Close **split** (not "split down") |
+| `cmd shift w` | Close window (all tabs) |
 | `ctrl cmd ,` | Reload kitty config |
 
 **Chrome** — cannot be rebound; these are its own.
@@ -90,7 +95,8 @@ Always a **new window**, never "go to the existing one".
 | --- | --- |
 | `ctrl tab` / `ctrl shift tab` | Next / previous tab |
 | `cmd ←` / `cmd →` | Back / forward |
-| `cmd 1`…`cmd 8`, `cmd 9` | Go to tab N / last tab — works, AeroSpace leaves these free |
+| `cmd 1`…`cmd 9` | Go to tab N / last tab — AeroSpace leaves these free |
+| `ctrl 1`…`ctrl 9` | Same, via Karabiner (feels Linux-like) |
 
 ## Text editing — Linux-style (Karabiner)
 
@@ -126,6 +132,17 @@ start. Word movement matches the GUI anyway:
 
 ---
 
+## Costs of this scheme
+
+| Lost | To |
+| --- | --- |
+| Chrome **Reopen Closed Tab** (`cmd shift t`) | Terminal.app launcher |
+| Chrome DevTools **element picker** (`cmd shift c`) | kitty launcher |
+| `Home`/`End` in browsers | Excluded on purpose, so Home still scrolls rather than navigating Back |
+| kitty split-close on `cmd shift d` | Nothing — but it is *not* "split down"; it closes |
+
+`cmd alt i` and `cmd alt j` still open DevTools.
+
 ## Deliberately not bound
 
 | Key | Left alone because |
@@ -146,7 +163,7 @@ word movement before any app sees it. Safe: AeroSpace does not use macOS Spaces.
 
 ## Known gaps
 
-- **No workspace-scoped MRU.** `cmd tab` cycles in tree order. With two windows
+- **No workspace-scoped MRU.** `alt tab` cycles in tree order. With two windows
   that is a toggle; with three or more it is a cycle, not "last used".
 - **`cmd+fn+…` depends on Karabiner**, because AeroSpace cannot bind `fn`. The
   `cmd+ctrl+…` and `alt+…` equivalents are native and always work, which is why
@@ -154,6 +171,13 @@ word movement before any app sees it. Safe: AeroSpace does not use macOS Spaces.
 - **`cmd+tab` is not used at all.** macOS consumes it in the WindowServer, above
   global hotkeys, so AeroSpace never receives it — the App Switcher appears and
   jumps you across workspaces regardless of what is bound.
+- **Karabiner must own the Command/Globe swap.** Karabiner grabs the keyboard
+  below the layer where System Settings → Modifier Keys applies, so that swap
+  stops working the moment Karabiner runs. It is therefore set in
+  `karabiner/karabiner.json` as a `simple_modifications` pair instead.
+- **Terminal exclusions are by bundle ID**, so an editor with an embedded
+  terminal (VS Code, JetBrains, Zed) is *not* excluded and would get `ctrl+c` as
+  copy inside its terminal. In-browser terminals can never be excluded.
 - **The `cmd+fn` aliases are unverified.** Command and Globe are swapped in
   System Settings, and which of the two Karabiner observes has not been tested.
   If they misbehave, moving the swap into Karabiner's `simple_modifications`

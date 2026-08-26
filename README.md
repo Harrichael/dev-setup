@@ -437,18 +437,14 @@ kitty draws its own tab bar inside one window, so tab switching is invisible to
 the window manager. There is no Ghostty setting that changes this — its
 non-native tab options are Linux-only.
 
-**The keybindings can't be shared across platforms.** `cmd` doesn't exist on
-Linux, and `ctrl+shift+1..9` is already `first_window`/`second_window`/… there
-for splits within a tab. So tab jumping is `cmd+1..9` on macOS and
-`ctrl+alt+1..9` on Linux.
-
-Note what that costs on macOS: kitty binds `cmd+1..9` by default to
-`first_window`…`ninth_window`, which jumps between *splits* inside a tab.
-Repointing them at tabs leaves split-by-number unbound — splits are still
-reachable with `cmd+opt+arrows`. Linux keeps its split bindings, since
-`ctrl+alt` was free. `cmd+9` / `ctrl+alt+9` go to the *last* tab rather
-than the ninth, matching Ghostty. `cmd+shift+p` (`ctrl+alt+p`) opens a fuzzy tab
-picker.
+**Tab keys are `alt+1..9` on both platforms**, so they live in the shared
+config; only window chrome differs per OS. Not `ctrl+digit`: every one except
+`ctrl+1` and `ctrl+9` transmits a control code — `ctrl+3` is ESC, `ctrl+6` is
+vim's alternate-file, `ctrl+7` is undo in zsh and readline — and binding those
+would swallow them before the shell saw them. Using `alt` also leaves kitty's
+own split bindings (`cmd+enter`, `cmd+1..9`, `ctrl+shift+[`/`]`) untouched. `cmd+9` / `ctrl+alt+9` go to the *last* tab rather
+than the ninth, matching Ghostty. `alt+p` opens a fuzzy tab picker — not `ctrl+shift+p`, which is kitty's
+hints-kitten prefix.
 
 **Appearance notes.** The font is JetBrains Mono Nerd Font — specifically the
 `NFM` (cell-width) variant, so icons can't overflow a cell and shove the line.
@@ -500,8 +496,10 @@ below the WindowServer and rewrites `cmd+tab` / `cmd+alt+tab` / `cmd+shift+tab`
 into `F18` / `F19` / `F20`, which is what AeroSpace actually binds. Pressing
 `F18` directly is the way to tell which layer is failing.
 
-**Bare `cmd+1..9` is left unbound**, so browser tab-by-number keeps working.
-Workspace switching is `cmd+shift+N`; moving a window there is `cmd+alt+shift+N`.
+**Bare `cmd+1..9` is left unbound**, so browser tab-by-number keeps working —
+and Karabiner additionally maps `ctrl+1..9` onto it for GUI apps. Workspace
+switching is `cmd+ctrl+N` (with `cmd+fn+N` aliased on top by Karabiner); moving a
+window there is `cmd+alt+N`.
 
 **One manual step:** disable *Move left/right a space* in System Settings →
 Keyboard → Keyboard Shortcuts → Mission Control. macOS binds those to

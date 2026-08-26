@@ -99,7 +99,10 @@ cmd-alt-shift-right = 'move right'
 cmd-alt-f = 'fullscreen'
 cmd-alt-slash = 'layout tiles horizontal vertical'
 cmd-alt-comma = 'layout accordion horizontal vertical'
-cmd-alt-space = 'layout floating tiling'
+# alt-space, not cmd-alt-space: macOS symbolic hotkey 65 (Show Finder search)
+# owns cmd+alt+space at the WindowServer level, above global hotkeys, so the
+# binding would silently lose exactly the way cmd+tab did.
+alt-space = 'layout floating tiling'
 # Suspends tiling entirely, which is the closest thing to "float this whole
 # space". There is no per-workspace floating mode.
 cmd-alt-e = 'enable toggle'
@@ -119,6 +122,10 @@ cmd-alt-shift-rightSquareBracket = 'move-node-to-monitor next'
 # gets a chance -- which is why cmd-shift-i works here even though Chrome binds
 # it internally. `open -na ... --new-window` forces a genuinely new window
 # instead of activating an existing one.
+# These shadow app shortcuts, which is the point -- a global hotkey is seen
+# before the focused app, so Chrome cannot hijack cmd+shift+i. The cost is real
+# though: cmd+shift+t was Chrome's Reopen Closed Tab and cmd+shift+c was its
+# DevTools element picker. cmd+alt+i and cmd+alt+j still open DevTools.
 cmd-shift-i = 'exec-and-forget open -na "Google Chrome" --args --new-window'
 cmd-shift-c = 'exec-and-forget open -na kitty'
 cmd-shift-t = 'exec-and-forget open -na Terminal'
