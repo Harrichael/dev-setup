@@ -470,7 +470,7 @@ Two apps, and neither is a window manager:
 | Tool | Job | Binds hotkeys? |
 | --- | --- | --- |
 | Hammerspoon | Linux-style `ctrl` editing keys, browser tab keys, move-window-to-monitor | yes, `hammerspoon/init.lua` |
-| Mos | per-device scroll direction and smoothing | no |
+| Mos | per-device scroll direction, speed and smoothing | no |
 
 **What was tried and rejected**, so it does not get re-litigated: AeroSpace
 (workspaces are per-monitor by design, and its back-and-forth is globally MRU),
@@ -530,6 +530,47 @@ browser, not between the two terminals.
 
 **`cmd+alt+shift+←/→`** moves the focused window to the previous/next monitor.
 Nothing else provides this -- not macOS, and not any window manager tried here.
+
+### Scrolling and macOS defaults
+
+`install.sh` writes these (`apply_macos_defaults`), because they are environment
+rather than config — there is no file to wire and no way to express them as a
+dotfile. Only keys the repo has an opinion about are touched; a wholesale plist
+import would also carry window positions and update timestamps.
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| `com.apple.swipescrolldirection` | `1` | natural scrolling, for the trackpad |
+| Mos `reverse` | `1` | flips the **wheel** back to traditional |
+| `com.apple.scrollwheel.scaling` | `-1` | wheel acceleration **off** |
+| Mos `step` / `speed` / `duration` | `8` / `2.2` / `2.8` | the pace and smoothing |
+| Mos `smoothSimTrackpad` | `0` | Mos ignores the trackpad entirely |
+| `com.apple.mouse.scaling` | `1.5` | pointer speed |
+| `com.apple.dock mru-spaces` | `0` | stop Spaces reordering themselves |
+
+Direction is the awkward one: macOS has exactly **one** scroll-direction key and
+both the Trackpad and Mouse panes are views onto it, so per-device direction is
+impossible to express there. The pair above is the workaround — natural globally,
+reversed again by Mos for discrete wheel events only. Neither half is meaningful
+alone.
+
+Acceleration is the other. Any *positive* `scrollwheel.scaling` re-enables macOS's
+curve, which damps slow scrolling and multiplies fast scrolling; it is felt as a
+breakpoint where the page abruptly flies. `-1` disables it, making a fast spin
+simply more notches of equal size — after which Mos `step` is the only thing
+setting the pace, and the one value to expect to retune.
+
+**WindowServer reads the scaling keys at login**, so those two do nothing until
+you log out and back in. `install.sh` says so when it changes one. Mos, by
+contrast, holds prefs in memory and writes them back on exit, so `install.sh`
+quits it before writing and relaunches after — writing underneath a running Mos
+is silently undone.
+
+Not set: `com.apple.spaces spans-displays`. It sits at the macOS default (`0`,
+displays get separate Spaces), so there is no opinion to enforce; set it to `1`
+if you want one Space spanning every monitor, and log out.
+
+**Manual step Mos needs:** grant it Accessibility. No script can.
 
 **Required manual step:** disable *Move left/right a space* in System Settings >
 Keyboard > Keyboard Shortcuts > Mission Control. WindowServer handles those above

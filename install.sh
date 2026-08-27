@@ -471,6 +471,115 @@ wire_hammerspoon() {
              "$WIRE_DIR/hammerspoon/init.lua"
 }
 
+# macOS keeps these in cfprefsd, per user. They are environment rather than
+# config: there is no file to wire, no block to remove, and no way to express
+# them as a dotfile. So dev-setup writes them, and writes ONLY the keys it holds
+# an opinion about -- importing a whole plist would drag along window positions
+# and update timestamps that are none of its business.
+macos_defaults_changed=0
+
+set_default() {
+  local domain="$1" key="$2" type="$3" want="$4" have label
+  if [ "$domain" = "-g" ]; then label="$key"; else label="$domain $key"; fi
+  have="$(defaults read "$domain" "$key" 2>/dev/null || true)"
+  if [ "$have" = "$want" ]; then
+    printf '    ok   %s = %s\n' "$label" "$want"
+    return 0
+  fi
+  defaults write "$domain" "$key" "-$type" "$want"
+  printf '    set  %s = %s (was %s)\n' "$label" "$want" "${have:-unset}"
+  macos_defaults_changed=1
+}
+
+# key type value. step is the pace knob and the one to expect to retune: with
+# acceleration off it is the ONLY thing setting how far a notch scrolls.
+MOS_SETTINGS="smooth bool 1
+smoothSimTrackpad bool 0
+reverse bool 1
+step float 8
+speed float 2.2
+duration float 2.8"
+
+mos_defaults() {
+  if [ ! -d /Applications/Mos.app ]; then
+    echo "    -- Mos not installed (Brewfile cask \"mos\"), settings skipped"
+    return 0
+  fi
+
+  # Check for drift before touching anything, so the common case of "nothing to
+  # do" does not restart a running Mos on every install.
+  local drift=0 key type want have
+  while read -r key type want; do
+    [ -n "$key" ] || continue
+    have="$(defaults read com.caldis.Mos "$key" 2>/dev/null || true)"
+    [ "$have" = "$want" ] || drift=1
+  done <<MOSEOF
+$MOS_SETTINGS
+MOSEOF
+
+  if [ "$drift" -eq 0 ]; then
+    echo "    ok   Mos: all settings current"
+    return 0
+  fi
+
+  # Mos holds its prefs in memory and writes them back when it exits, so a write
+  # underneath a running Mos is silently undone the next time it quits. This is
+  # the whole reason for the quit/write/relaunch dance.
+  local relaunch=0
+  if pgrep -x Mos >/dev/null 2>&1; then
+    relaunch=1
+    osascript -e 'quit app "Mos"' >/dev/null 2>&1 || true
+    sleep 1
+    if pgrep -x Mos >/dev/null 2>&1; then killall Mos 2>/dev/null || true; sleep 1; fi
+  fi
+
+  while read -r key type want; do
+    [ -n "$key" ] || continue
+    set_default com.caldis.Mos "$key" "$type" "$want"
+  done <<MOSEOF
+$MOS_SETTINGS
+MOSEOF
+
+  [ "$relaunch" -eq 1 ] && open -a Mos
+  return 0
+}
+
+apply_macos_defaults() {
+  [ "$OS" = macos ] || return 0
+  echo "==> macos defaults"
+
+  # Scroll DIRECTION is a single global key -- the Trackpad and Mouse panes in
+  # System Settings are both views onto it -- so per-device direction cannot be
+  # expressed there at all. The split is these two settings together: macOS
+  # natural ON so the trackpad scrolls naturally, and Mos reverse ON to flip the
+  # wheel back. Neither half means anything without the other.
+  set_default -g com.apple.swipescrolldirection bool 1
+
+  # -1 disables wheel acceleration outright. ANY positive value re-enables
+  # macOS's curve, which damps slow scrolling and multiplies fast scrolling; the
+  # symptom is a breakpoint where the page suddenly flies. Linear means a fast
+  # spin is just more notches, each travelling the same distance. Wheel only --
+  # the trackpad is pixel-continuous and never reads this key.
+  set_default -g com.apple.scrollwheel.scaling float -1
+
+  set_default -g com.apple.mouse.scaling float 1.5
+
+  # Keep Spaces in a fixed order so an index means the same thing tomorrow.
+  set_default com.apple.dock mru-spaces bool 0
+
+  mos_defaults
+
+  # Deliberately NOT set here: com.apple.spaces spans-displays. It is at the
+  # macOS default, so dev-setup has no opinion to enforce -- and flipping it
+  # rearranges every existing window. See README if you want displays to share
+  # one Space.
+
+  if [ "$macos_defaults_changed" -eq 1 ]; then
+    echo "    note: WindowServer reads the pointer and scroll scaling keys at"
+    echo "          LOGIN, so log out and back in for those to fully apply."
+  fi
+}
+
 # Claude Code reads ~/.claude/CLAUDE.md as global instructions. Wire it by
 # reference like every other dotfile, using CLAUDE.md's own @import syntax, so
 # the content is version-controlled here and a pull updates it.
@@ -1043,6 +1152,7 @@ wire_nvim
 wire_kitty
 wire_claude
 wire_hammerspoon
+apply_macos_defaults
 echo
 setup_node
 setup_nvim_plugins

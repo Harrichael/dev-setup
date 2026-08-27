@@ -28,4 +28,9 @@ cask "mos"          # per-device scroll: see the scrolling note below
 # Mos only transforms discrete wheel events and leaves the trackpad alone, so:
 #   macOS natural scrolling ON  -> trackpad scrolls naturally
 #   Mos `reverse` = true        -> external mouse scrolls the traditional way
-# Both are Mos defaults; the only manual step is granting it Accessibility.
+#
+# install.sh writes both halves, plus Mos's step/speed/duration and
+# com.apple.scrollwheel.scaling -- see apply_macos_defaults there. Installing the
+# cask is not enough on its own: the tuned values are not Mos defaults, and
+# nothing but that function knows them. The remaining manual step is granting
+# Mos Accessibility, which no script can do.
