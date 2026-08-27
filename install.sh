@@ -661,10 +661,17 @@ list_direct_clones() {
   done
 }
 
-# Write the workspace's own git identity and point ~/.gitconfig at it. The
-# identity lives with the workspace, so it never lands in this public repo.
+# Write the workspace's own git identity and ssh key, and point ~/.gitconfig at
+# it. Both live with the workspace, so neither lands in this public repo.
+#
+# The key belongs here beside the identity rather than in ~/.ssh/config, because
+# that file keys off the host and both roots reach the same host (github.com) as
+# different accounts. Pinning one key there wins globally and leaves the other
+# root unable to even read its remotes -- and since GitHub hides a private repo
+# instead of reporting a permission error, that surfaces as the thoroughly
+# misleading "Repository not found".
 setup_workspace_identity() {
-  local root="$1" cfg name email cur_name cur_email
+  local root="$1" cfg name email key cur_name cur_email cur_key
   # Strip a trailing slash before anything interpolates it. gitdir: patterns are
   # matched literally, so "gitdir:$root/" on a root that already ended in "/"
   # produced "gitdir:/path/psrc//" -- which silently matches nothing, leaving
@@ -673,10 +680,14 @@ setup_workspace_identity() {
   root="${root%/}"
   cfg="$root/.choros-config/gitconfig"
 
-  cur_name=""; cur_email=""
+  cur_name=""; cur_email=""; cur_key=""
   if [ -f "$cfg" ]; then
     cur_name="$(git config --file "$cfg" --get user.name  || true)"
     cur_email="$(git config --file "$cfg" --get user.email || true)"
+    # Recover the bare key path from the stored command. The identity write
+    # below truncates this file, so anything not read back here is lost.
+    cur_key="$(git config --file "$cfg" --get core.sshCommand 2>/dev/null \
+      | sed -n 's/^ssh -i \([^ ]*\).*/\1/p')"
   fi
 
   name="$(ask_line "    git user.name  for $root:" "$cur_name")"
@@ -690,7 +701,23 @@ setup_workspace_identity() {
   printf '[user]\n\tname = %s\n\temail = %s\n' "$name" "$email" > "$cfg"
   echo "    identity: $name <$email> -> $cfg"
 
-  # gitdir: needs the trailing slash to match everything beneath the root.
+  key="$(ask_line "    ssh key     for $root (blank for ssh defaults):" "$cur_key")"
+  if [ -n "$key" ]; then
+    key="$(abs_path "$key")"
+    # Advisory, not fatal: keys are often provisioned after the first install.
+    [ -f "$key" ] || echo "    warning: $key does not exist yet"
+    # IdentitiesOnly is the point of the exercise -- without it ssh still offers
+    # whatever the agent holds first and can authenticate as the wrong account.
+    git config --file "$cfg" core.sshCommand "ssh -i $key -o IdentitiesOnly=yes"
+    echo "    ssh key: $key -> $cfg"
+  else
+    echo "    ssh key left unset for $root (ssh defaults apply)"
+  fi
+
+  # gitdir: needs the trailing slash to match everything beneath the root. The
+  # include also covers `git clone` into the root -- git tests the gitdir
+  # condition against the clone destination -- so the key is in force for the
+  # very first fetch, not just for commits made later.
   wire_block "$HOME/.gitconfig" "#" "[includeIf \"gitdir:$root/\"]
 	path = $cfg" "gitdir:$root/" "dev-setup identity $root"
 }
