@@ -80,36 +80,104 @@ local function isTerminal(id)
   return false
 end
 
+--------------------------------------------------------------------------------
+-- Tab keys in the browser, matching kitty
+--------------------------------------------------------------------------------
+-- kitty binds ctrl+t / ctrl+w / alt+digit natively (see kitty/kitty.conf).
+-- Chrome has no user-configurable shortcuts on macOS at all, so rewriting them
+-- here is the only mechanism that exists -- not a workaround for a setting
+-- nobody found.
+--
+-- Scoped to browsers by bundle id, deliberately NOT to "anything that is not a
+-- terminal". ctrl+w leaking into an ordinary app would arrive as cmd+w and
+-- close the WINDOW, turning a stale delete-word reflex into lost work. An
+-- unlisted browser merely lacks the keys; the inverse loses data.
+local BROWSERS = {
+  ["com.google.Chrome"] = true,
+  ["com.apple.Safari"]  = true,
+}
+
+local BROWSER_CTRL = {
+  t = { mods = { "cmd" } },   -- new tab
+  w = { mods = { "cmd" } },   -- close tab
+}
+
+-- cmd+1..8 and cmd+9 are already tab-N and last-tab in Chrome, exactly what
+-- kitty's alt+1..8 and alt+9 do, so the digits need nothing but the modifier
+-- swapped. alt+p is kitty's fuzzy tab picker and cmd+shift+a is Chrome's Search
+-- Tabs, the same idea -- and the one entry that changes the KEY rather than
+-- only the modifier. Safari has no equivalent, so there alt+p does nothing.
+local BROWSER_ALT = {
+  ["1"] = { mods = { "cmd" } },
+  ["2"] = { mods = { "cmd" } },
+  ["3"] = { mods = { "cmd" } },
+  ["4"] = { mods = { "cmd" } },
+  ["5"] = { mods = { "cmd" } },
+  ["6"] = { mods = { "cmd" } },
+  ["7"] = { mods = { "cmd" } },
+  ["8"] = { mods = { "cmd" } },
+  ["9"] = { mods = { "cmd" } },
+  p     = { mods = { "cmd", "shift" }, key = "a" },
+}
+
 -- Keyed by keycode so the hot path does no string work.
-local BY_KEYCODE = {}
-for key, rule in pairs(REWRITE) do
-  local code = hs.keycodes.map[key]
-  if code then BY_KEYCODE[code] = rule end
+local function byKeycode(rules)
+  local out = {}
+  for key, rule in pairs(rules) do
+    local code = hs.keycodes.map[key]
+    if code then
+      if rule.key then rule.code = hs.keycodes.map[rule.key] end
+      out[code] = rule
+    end
+  end
+  return out
 end
+
+local CTRL_RULES         = byKeycode(REWRITE)
+local BROWSER_CTRL_RULES = byKeycode(BROWSER_CTRL)
+local BROWSER_ALT_RULES  = byKeycode(BROWSER_ALT)
 
 -- The event is mutated in place and passed on, rather than swallowed and
 -- reposted. Reposting would re-enter this tap and need a loop guard; mutating
--- cannot, because the replacement no longer carries the ctrl flag we match on.
-ctrlLayer = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(e)
+-- cannot, because the replacement no longer carries the modifier we match on.
+keyLayer = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(e)
   local f = e:getFlags()
-  if not f.ctrl then return false end
-  -- Leave ctrl+cmd and ctrl+alt alone: those chords belong to other people,
-  -- including macOS itself and kitty's config-reload.
-  if f.cmd or f.alt then return false end
+  -- ctrl+cmd, ctrl+alt and the like belong to other owners, macOS itself and
+  -- kitty's config-reload among them.
+  if f.cmd or (f.ctrl and f.alt) then return false end
 
-  local rule = BY_KEYCODE[e:getKeyCode()]
+  local code = e:getKeyCode()
+  local rule, browsersOnly
+  if f.ctrl then
+    rule = CTRL_RULES[code]
+    if not rule then rule, browsersOnly = BROWSER_CTRL_RULES[code], true end
+  elseif f.alt then
+    rule, browsersOnly = BROWSER_ALT_RULES[code], true
+  end
   if not rule then return false end
 
+  -- Deliberately after the keycode lookup: this callback runs on every keystroke
+  -- typed anywhere, and the app query is the expensive part.
   local app = hs.application.frontmostApplication()
-  if not rule.inTerminals and isTerminal(app and app:bundleID()) then return false end
+  local id = app and app:bundleID()
+
+  if browsersOnly then
+    if not BROWSERS[id] then return false end
+    -- Exact chord only. alt+shift+1 is nobody's tab key, and the shift these
+    -- rules do want (Chrome's cmd+shift+a) comes from the rule itself.
+    if f.shift then return false end
+  elseif not rule.inTerminals and isTerminal(id) then
+    return false
+  end
 
   local mods = {}
   for _, m in ipairs(rule.mods) do mods[m] = true end
   if f.shift then mods.shift = true end   -- carries ctrl+shift+arrow -> alt+shift+arrow
   e:setFlags(mods)
+  if rule.code then e:setKeyCode(rule.code) end
   return false
 end)
-ctrlLayer:start()
+keyLayer:start()
 
 --------------------------------------------------------------------------------
 -- Move the focused window to the next monitor

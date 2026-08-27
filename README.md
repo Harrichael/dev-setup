@@ -445,6 +445,15 @@ own split bindings (`cmd+enter`, `cmd+1..9`, `ctrl+shift+[`/`]`) untouched. `alt
 ninth, matching Ghostty. `alt+p` opens a fuzzy tab picker — not `ctrl+shift+p`, which is kitty's
 hints-kitten prefix.
 
+**`ctrl+t` and `ctrl+w`** open and close a tab, the same keys the browser gets
+(see [the ctrl layer](#keyboard-scheme-macos)). Unlike the digits these do cost
+something: kitty intercepts them, so the shell no longer sees `ctrl+w`
+backward-kill-word or `ctrl+t` transpose-chars. `ctrl+backspace` is bound to
+backward-kill-word in `zshrc` and is the replacement. Closing is not silent —
+kitty's `confirm_os_window_close` defaults to `-1`, applies to `close_tab`, and
+with shell integration on ignores tabs idling at a prompt, so a tab with a
+command running asks before it dies.
+
 **Appearance notes.** The font is JetBrains Mono Nerd Font — specifically the
 `NFM` (cell-width) variant, so icons can't overflow a cell and shove the line.
 Colors are One Dark; Ghostty's own defaults pair One Dark's background
@@ -460,7 +469,7 @@ Two apps, and neither is a window manager:
 
 | Tool | Job | Binds hotkeys? |
 | --- | --- | --- |
-| Hammerspoon | Linux-style `ctrl` editing keys, move-window-to-monitor | yes, `hammerspoon/init.lua` |
+| Hammerspoon | Linux-style `ctrl` editing keys, browser tab keys, move-window-to-monitor | yes, `hammerspoon/init.lua` |
 | Mos | per-device scroll direction and smoothing | no |
 
 **What was tried and rejected**, so it does not get re-litigated: AeroSpace
@@ -494,6 +503,30 @@ a terminal selects the whole scrollback.
 
 `ctrl+c/v/x` are deliberately absent everywhere. `ctrl+c` is SIGINT, and a
 rewrite leaking into any unlisted app would swallow an interrupt silently.
+
+**Browser tab keys.** kitty can bind its own tab keys; Chrome has no
+user-configurable shortcuts on macOS at all, so the same layer rewrites them
+there. This is the only mechanism available, not a workaround for a setting
+nobody found.
+
+| Keys | In a browser | kitty | Anywhere else |
+| --- | --- | --- | --- |
+| `ctrl+t` | `cmd+t`, new tab | native, new tab in the same cwd | untouched |
+| `ctrl+w` | `cmd+w`, close tab | native, `close_tab` | untouched |
+| `alt+1..8` | `cmd+1..8`, tab N | native, tab N | untouched |
+| `alt+9` | `cmd+9`, last tab | native, last tab | untouched |
+| `alt+p` | `cmd+shift+a`, Search Tabs | native, fuzzy tab picker | untouched |
+
+These are scoped to browsers by bundle id — Chrome and Safari — rather than to
+"anything that is not a terminal", and that asymmetry with the ctrl layer above
+is deliberate. `ctrl+w` reaching an ordinary app as `cmd+w` would close the
+**window**, so a stale delete-word reflex would cost work. An unlisted browser
+just does not get the keys; the inverse loses data. Safari has no Search Tabs, so
+`alt+p` does nothing there.
+
+Ghostty is **not** covered: this repo ships no Ghostty config, so `ctrl+w` is
+still backward-kill-word there. The keys are consistent between kitty and the
+browser, not between the two terminals.
 
 **`cmd+alt+shift+←/→`** moves the focused window to the previous/next monitor.
 Nothing else provides this -- not macOS, and not any window manager tried here.
