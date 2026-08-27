@@ -469,7 +469,7 @@ Two apps, and neither is a window manager:
 
 | Tool | Job | Binds hotkeys? |
 | --- | --- | --- |
-| Hammerspoon | Linux-style `ctrl` editing keys, browser tab keys, move-window-to-monitor | yes, `hammerspoon/init.lua` |
+| Hammerspoon | Linux-style `ctrl` editing keys, browser tab keys, app launcher, move-window-to-monitor | yes, `hammerspoon/init.lua` |
 | Mos | per-device scroll direction, speed and smoothing | no |
 
 **What was tried and rejected**, so it does not get re-litigated: AeroSpace
@@ -527,6 +527,23 @@ just does not get the keys; the inverse loses data. Safari has no Search Tabs, s
 Ghostty is **not** covered: this repo ships no Ghostty config, so `ctrl+w` is
 still backward-kill-word there. The keys are consistent between kitty and the
 browser, not between the two terminals.
+
+**App launcher.** `ctrl+cmd` plus a letter, `launchOrFocus` so a second press
+returns to the app rather than opening another copy of it.
+
+| Keys | App |
+| --- | --- |
+| `ctrl+cmd+i` | Google Chrome |
+| `ctrl+cmd+c` | kitty |
+| `ctrl+cmd+t` | Terminal.app |
+
+`ctrl+cmd` rather than bare `cmd`, which was the obvious choice and has no room:
+`cmd+c` is Copy and `cmd+t` is New Tab, and `hs.hotkey.bind` fires *before* the
+focused app sees the key — so either would break that shortcut in every
+application on the machine, not just in the app being launched. `ctrl+cmd` is
+free: macOS claims only `F`, `space`, `Q` and `D` on it, and kitty only comma.
+Apps are keyed by bundle id, since a name is localised and drifts between
+releases.
 
 **`cmd+alt+shift+←/→`** moves the focused window to the previous/next monitor.
 Nothing else provides this -- not macOS, and not any window manager tried here.

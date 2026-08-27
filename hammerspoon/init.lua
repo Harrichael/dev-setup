@@ -194,6 +194,33 @@ hs.hotkey.bind({ "cmd", "alt", "shift" }, "right", function() moveScreen("next")
 hs.hotkey.bind({ "cmd", "alt", "shift" }, "left",  function() moveScreen("prev") end)
 
 --------------------------------------------------------------------------------
+-- App launcher
+--------------------------------------------------------------------------------
+-- ctrl+cmd, not cmd. A bare cmd chord was the obvious choice and has no room:
+-- cmd+c is Copy and cmd+t is New Tab, and hs.hotkey.bind fires BEFORE the
+-- focused app sees the key, so binding either would break it in every
+-- application on the machine. ctrl+cmd is genuinely free -- macOS claims only
+-- F, space, Q and D on it, and kitty only comma.
+--
+-- Keyed by bundle id rather than app name: a name is localised and drifts
+-- between releases, a bundle id does not.
+local LAUNCH = {
+  i = "com.google.Chrome",
+  c = "net.kovidgoyal.kitty",
+  t = "com.apple.Terminal",
+}
+
+for key, bundleID in pairs(LAUNCH) do
+  hs.hotkey.bind({ "ctrl", "cmd" }, key, function()
+    -- launchOrFocus rather than launch: a second press returns to the app
+    -- instead of opening another copy of it.
+    if not hs.application.launchOrFocusByBundleID(bundleID) then
+      hs.alert.show("launcher: not installed -- " .. bundleID)
+    end
+  end)
+end
+
+--------------------------------------------------------------------------------
 -- Introspection helpers, callable from the shell via `hs -c`
 --------------------------------------------------------------------------------
 -- Kept because macOS gives the shell no way to see window geometry: screencapture
