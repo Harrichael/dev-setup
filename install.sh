@@ -396,7 +396,7 @@ install_self() {
   # It still has to pull, or `./install.sh` from here could never update itself.
   if [ -z "${DEV_SETUP_SELF_DIR:-}" ] && [ "$SELF_DIR" = "$REPO_DIR" ]; then
     local self_url
-    self_url="$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || echo "")"
+    self_url="$(ssh_remote "$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || echo "")")"
     if [ -n "$self_url" ]; then
       ensure_checkout "$self_url" "$SELF_DIR" || true
     fi
@@ -487,10 +487,53 @@ wire_claude() {
 
 # ---------------------------------------------------------------- workspaces ---
 
-CHOROS_URL="${CHOROS_URL:-https://github.com/Harrichael/Choros}"
-
 # A choros project root is any dir containing .choros-config/registry.
 registry_of() { printf '%s/.choros-config/registry' "$1"; }
+
+# Force github remotes to SSH. This matters far more than it looks: a registry
+# entry is the clone SOURCE for every workspace choros ever creates, so an HTTPS
+# origin there is inherited forever -- and since GitHub dropped password auth in
+# 2021, every inheriting clone can fetch but never push, failing with a
+# credential prompt that cannot succeed. register_dev_sources copies the remote
+# of whatever checkout install.sh happens to be run from, so without this one
+# HTTPS clone anywhere reintroduces the problem for good.
+# `choros add <ssh-url>` is the official way to populate a registry: it enforces
+# ssh URLs and derives the entry name from the URL itself. It is deliberately not
+# idempotent -- a second add of the same repo exits 1 with "already exists" -- and
+# install.sh must stay re-runnable, so check for the entry before calling rather
+# than printing an error on every re-run.
+choros_add() {
+  local reg="$1" url name root dest
+  url="$(ssh_remote "$2")"
+  [ -n "$url" ] || return 0
+  name="$(basename "${url%.git}")"
+  root="${reg%/.choros-config/registry}"
+  dest="$reg/$name"
+
+  if [ -d "$dest/.git" ]; then
+    echo "      already registered: $name"
+    return 0
+  fi
+  if ! command -v choros >/dev/null 2>&1; then
+    echo "      !! choros not on PATH, cannot register $name"
+    return 0
+  fi
+  # Run from the root: choros resolves the registry relative to the cwd.
+  if ( cd "$root" && choros add "$url" >/dev/null 2>&1 ); then
+    echo "      registered: $name"
+  else
+    echo "      !! choros add failed: $url"
+  fi
+}
+
+ssh_remote() {
+  case "$1" in
+    https://github.com/*)
+      local path="${1#https://github.com/}"
+      printf 'git@github.com:%s' "${path%.git}.git" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
 
 # Existing top-level git repos in a workspace root. These are "direct clones":
 # they predate the workspace and are not managed by choros. We register them so
@@ -654,16 +697,15 @@ choose_registry() {
 # -------------------------------------------------------------------- tools ---
 
 # name|clone-url|kind|binary
-#   cargo  -- cargo install --path, so the binary lands in ~/.cargo/bin, which
-#             both shell configs already put on PATH
-#   script -- run the repo's own install.sh and let it decide what to do.
-#             Gnomon deliberately deploys a copy to ~/.claude and pins
-#             statusLine at it, so wiring it by reference instead would be
-#             silently reverted by its next install. Since this runs its
-#             installer on every pass, a pull here is a redeploy anyway.
-TOOLS="Choros|git@github.com:Harrichael/Choros.git|cargo|choros
-LatticeQL|git@github.com:Harrichael/LatticeQL.git|cargo|lql
-Gnomon|git@github.com:Harrichael/Gnomon.git|script|"
+# Every tool answers to ./install.sh at its root, and that script owns every
+# deployment decision -- what to build, where the binary goes, how to clean up
+# after a rename. dev-setup used to build the Rust ones itself with `cargo
+# install --path`, which meant two places knew how Choros installs and they
+# disagreed: two binaries at different commits, the stale one earlier on PATH.
+# One uniform path is the fix; a smarter dispatch was not.
+TOOLS="Choros|git@github.com:Harrichael/Choros.git
+LatticeQL|git@github.com:Harrichael/LatticeQL.git
+Gnomon|git@github.com:Harrichael/Gnomon.git"
 
 # Records the commit each tool was last built from. `cargo install` re-links on
 # every invocation otherwise, and these packages do not bump their version
@@ -722,64 +764,32 @@ ensure_checkout() {
   fi
 }
 
-# Is the installed binary the one cargo built from this exact directory? Cargo
-# records the source path per package, and a binary left over from a clone
-# somewhere else is stale even when the commit matches.
-cargo_installed_from() {
-  local dest="$1" crates="${CARGO_HOME:-$HOME/.cargo}/.crates.toml"
-  [ -f "$crates" ] || return 1
-  grep -qF "(path+file://$dest)" "$crates"
-}
-
-# If a tool renames its binary, cargo installs the new name and leaves the old
-# one in place -- a stale artifact built from an older commit, with nothing left
-# that will ever update it. Cargo knows which binaries belong to the package, so
-# ask it rather than guessing from the package name.
-warn_extra_binaries() {
-  local dest="$1" expected="$2" other
+# dev-setup used to `cargo install --path` the Rust tools, so on any machine
+# provisioned before that changed there is a binary in ~/.cargo/bin that nothing
+# will ever update again. Once ~/.local/bin goes ahead of ~/.cargo/bin on PATH it
+# is merely shadowed, not gone -- and a shadowed stale binary is the bug waiting
+# to resurface the next time PATH order changes. dev-setup created them, so
+# dev-setup removes them.
+#
+# Only packages cargo recorded as installed FROM this tools directory are
+# touched; a hand-run `cargo install` of anything else is the user's business.
+# Deletable once every machine has run this at least once.
+drop_cargo_installed_tools() {
+  local base="$1" crates="${CARGO_HOME:-$HOME/.cargo}/.crates.toml" pkg
+  [ -f "$crates" ] || return 0
   command -v cargo >/dev/null 2>&1 || return 0
-  for other in $(cargo install --list 2>/dev/null | awk -v d="($dest)" '
-        /^[^[:space:]]/ { inblock = (index($0, d) > 0); next }
-        inblock && /^[[:space:]]/ { print $1 }
-      '); do
-    [ "$other" = "$expected" ] && continue
-    echo "      note: this package also installed [$other] -- probably a renamed"
-    echo "            binary left behind. Remove both and reinstall:"
-    echo "            cargo uninstall $(basename "$dest" | tr "[:upper:]" "[:lower:]") && ./install.sh"
+
+  for pkg in $(awk -v b="$base" '
+        /^"/ {
+          line = $0
+          sub(/^"/, "", line)
+          split(line, f, " ")
+          if (index(line, "path+file://" b "/") > 0) print f[1]
+        }' "$crates"); do
+    if cargo uninstall "$pkg" >/dev/null 2>&1; then
+      echo "    removed superseded cargo install: $pkg"
+    fi
   done
-}
-
-build_cargo_tool() {
-  local name="$1" dest="$2" bin="$3"
-  local stamp="$STAMP_DIR/$name.sha" head installed=""
-
-  ensure_rust || { echo "      !! cargo unavailable, not built"; return 0; }
-
-  head="$(git -C "$dest" rev-parse HEAD 2>/dev/null || echo unknown)"
-  [ -f "$stamp" ] && installed="$(cat "$stamp")"
-
-  if [ "$installed" = "$head" ] && command -v "$bin" >/dev/null 2>&1 \
-     && cargo_installed_from "$dest"; then
-    echo "      already built at ${head%"${head#???????}"}"
-    return 0
-  fi
-
-  # Say so when the reason for rebuilding is provenance rather than a new
-  # commit -- e.g. the binary was installed from a stray clone elsewhere.
-  if [ "$installed" = "$head" ] && ! cargo_installed_from "$dest"; then
-    echo "      re-installing: current binary was not built from this checkout"
-  fi
-
-  echo "      building (a cold build can take several minutes)"
-  if cargo install --path "$dest" --force >/dev/null 2>&1; then
-    mkdir -p "$STAMP_DIR"
-    printf '%s\n' "$head" > "$stamp"
-    echo "      installed: $(command -v "$bin" 2>/dev/null || echo "$bin")"
-    warn_extra_binaries "$dest" "$bin"
-  else
-    echo "      !! build failed. Run for the error:"
-    echo "         cargo install --path $dest --force"
-  fi
 }
 
 run_tool_installer() {
@@ -839,22 +849,24 @@ install_tools() {
   mkdir -p "$base"
   TOOLS_BASE="$base"
 
-  local line name url kind bin dest oldifs
+  # Providing the toolchain is machine provisioning, so it stays dev-setup's job
+  # even though building is not. The installers check for cargo themselves and
+  # fail loudly without it, which is what a standalone clone needs.
+  ensure_rust || echo "    !! cargo unavailable; Rust tools will report it"
+
+  drop_cargo_installed_tools "$base"
+
+  local line name url dest oldifs
   oldifs="$IFS"; IFS=$'\n'
   for line in $TOOLS; do
     IFS="$oldifs"
     name="$(printf '%s' "$line" | cut -d'|' -f1)"
     url="$(printf '%s' "$line" | cut -d'|' -f2)"
-    kind="$(printf '%s' "$line" | cut -d'|' -f3)"
-    bin="$(printf '%s' "$line" | cut -d'|' -f4)"
     dest="$base/$name"
 
     echo "    --- $name"
     if ensure_checkout "$url" "$dest"; then
-      case "$kind" in
-        cargo)  build_cargo_tool "$name" "$dest" "$bin" ;;
-        script) run_tool_installer "$name" "$dest" ;;
-      esac
+      run_tool_installer "$name" "$dest"
       report_stale_copies "$name" "$dest"
     fi
     IFS=$'\n'
@@ -910,17 +922,12 @@ register_dev_sources() {
 
   mkdir -p "$reg"
 
-  local self_url line name url dest oldifs
+  local self_url line name url oldifs
   self_url="$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || echo "")"
 
   if [ -n "$self_url" ]; then
     echo "    --- dev-setup"
-    dest="$reg/$(basename "$REPO_DIR")"
-    if [ "$dest" = "$REPO_DIR" ]; then
-      echo "      this checkout is already there"
-    else
-      ensure_checkout "$self_url" "$dest" || true
-    fi
+    choros_add "$reg" "$self_url"
   else
     echo "    --- dev-setup: no origin remote, skipped"
   fi
@@ -931,7 +938,7 @@ register_dev_sources() {
     name="$(printf '%s' "$line" | cut -d'|' -f1)"
     url="$(printf '%s' "$line" | cut -d'|' -f2)"
     echo "    --- $name"
-    ensure_checkout "$url" "$reg/$name" || true
+    choros_add "$reg" "$url"
     IFS=$'\n'
   done
   IFS="$oldifs"
@@ -980,6 +987,19 @@ record_provenance() {
         dirty=clean
         [ -n "$(git -C "$dest" status --porcelain 2>/dev/null)" ] && dirty=DIRTY
         printf '%s\t%s\t%s\t%s\n' "$name" "$dest" "$head" "$dirty"
+
+        # A checkout's HEAD is not proof of what is live: any clone can run the
+        # installer and become the deployed version. Tools that leave a receipt
+        # say so themselves, so report that separately rather than inferring it.
+        local receipt rbin rcommit rdirty
+        receipt="${XDG_STATE_HOME:-$HOME/.local/state}/$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')/receipt"
+        if [ -f "$receipt" ]; then
+          rbin="$(sed -n 's/^bin=//p' "$receipt")"
+          rcommit="$(sed -n 's/^commit=//p' "$receipt")"
+          rdirty=clean
+          [ "$(sed -n 's/^dirty=//p' "$receipt")" = yes ] && rdirty=DIRTY
+          printf '%s(deployed)\t%s\t%s\t%s\n' "$name" "${rbin:-unknown}" "${rcommit:-unknown}" "$rdirty"
+        fi
       fi
       IFS=$'\n'
     done

@@ -123,6 +123,10 @@ ssgr() {
 
 [ -d /snap/bin ] && export PATH="/snap/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
+# After .cargo/bin, so it lands ahead of it: tools install themselves here, and
+# if a superseded cargo-installed copy ever reappears the self-installed one
+# shadows it rather than the other way round.
+export PATH="$HOME/.local/bin:$PATH"
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
