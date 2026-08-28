@@ -121,6 +121,17 @@ require('packer').startup(function(use)
     run = ':TSUpdate'
   }
 
+  -- Cedar policy language (cedarpolicy.com). nvim-treesitter ships no cedar
+  -- parser of its own, so this plugin registers a third-party grammar and
+  -- carries the highlights/folds queries for it.
+  --
+  -- No `requires` on nvim-treesitter: it is already declared above with a
+  -- branch pin, and a second spec for the same plugin is how that pin gets
+  -- quietly dropped. Load order is not a concern either -- setup() is called
+  -- explicitly from init_base.lua, and a start/ plugin's lua/ modules are
+  -- requireable as soon as it is on runtimepath.
+  use 'edmondop/cedar.nvim'
+
   use {
     'lewis6991/gitsigns.nvim',
     config = function()

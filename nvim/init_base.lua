@@ -78,8 +78,27 @@ vim.keymap.set('n', '<leader>l', ':nohl<CR>')   -- Clear search highlights
 
 
 --Treesitter config
+-- Registers the cedar parser and the .cedar filetype. It has to run before
+-- ensure_installed below, which errors on a parser it has never heard of.
+-- cedar.nvim calls this itself from plugin/cedar.lua, but that is too late:
+-- plugin/ scripts are sourced only after init.lua returns.
+require('cedar').setup()
+
+-- cedar.nvim's bundled highlights query captures whole parent nodes, tinting
+-- every token in a policy as a keyword, and has no rule for comments at all.
+-- Ours has to be installed by hand rather than by dropping it on runtimepath:
+-- query.get_files keeps the FIRST non-extends file it finds and discards the
+-- rest, and the plugin's copy always comes first. Resolved relative to this
+-- file so it does not depend on runtimepath order either.
+local nvim_config_dir = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h")
+vim.treesitter.query.set(
+    "cedar",
+    "highlights",
+    table.concat(vim.fn.readfile(nvim_config_dir .. "/queries/cedar/highlights.scm"), "\n")
+)
+
 require'nvim-treesitter.configs'.setup {
-    ensure_installed = { "hcl" },
+    ensure_installed = { "hcl", "cedar" },
     highlight = {
         enable = true,
     },
@@ -88,5 +107,10 @@ require'nvim-treesitter.configs'.setup {
 vim.filetype.add({
   extension = {
     tf = "hcl",
+    -- Cedar schemas are a separate language from Cedar policies, with no
+    -- tree-sitter grammar in existence; syntax/cedarschema.vim highlights them.
+    -- The JSON schema format is left alone: nvim keys off the last extension,
+    -- so foo.cedarschema.json is already correctly detected as json.
+    cedarschema = "cedarschema",
   },
 })
