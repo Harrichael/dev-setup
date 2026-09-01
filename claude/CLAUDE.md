@@ -3,17 +3,22 @@
 - Never just narrate the what or how of the code.
 - When a comment is warranted, explain the why or motivation, succinctly.
 - The bar for adding a comment: large ambiguity, or a design choice that
-  would surprise the reader.
+  would surprise the reader. This is important and all further guidance should
+  be read in light of this.
 - No docstring boilerplate explaining function args, return values, etc.
-- Do narrate "gotchas".
+- Do narrate "gotchas", but don't be pedantic.
+- Comments are not the place to capture historic back and forth. Sometimes the
+  right call is not add and add more to a comment, but to go back and reframe
+  and even delete comments. Comments about history should be very rare.
 - For libraries, consider a file-level extended comment explaining how to
-  use the module, with an example.
-- In examples, illustrate the API generically. Concrete, evocative names
-  are good (`users`, `posts`, `author`). Don't reference specific
-  consumers, components, or features elsewhere in this project; the
-  example should stand on its own.
-- Project-internal references are fine (and often useful) in "why"
-  comments; that's where the coupling actually lives. But use with discernment.
+  use the module, with an example. But if its not a published library, there is
+  no need to over comment here.
+    - In examples, illustrate the API generically. Concrete, evocative names
+      are good (`users`, `posts`, `author`). Don't reference specific
+      consumers, components, or features elsewhere in this project; the
+      example should stand on its own.
+    - Project-internal references are fine (and often useful) in "why"
+      comments; that's where the coupling actually lives. But use with discernment.
 
 ## Tests
 
