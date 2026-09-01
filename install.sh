@@ -496,9 +496,9 @@ set_default() {
 MOS_SETTINGS="smooth bool 1
 smoothSimTrackpad bool 0
 reverse bool 1
-step float 8
+step float 25
 speed float 2.2
-duration float 2.8"
+duration float 1.4"
 
 mos_defaults() {
   if [ ! -d /Applications/Mos.app ]; then
