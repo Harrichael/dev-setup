@@ -2,6 +2,8 @@
 
 - Never just narrate the what or how of the code.
 - When a comment is warranted, explain the why or motivation, succinctly.
+- For tests, don't over narrate the steps. However, a good multiline header
+  comment to introduce the test is fantastic.
 - The bar for adding a comment: large ambiguity, or a design choice that
   would surprise the reader. This is important and all further guidance should
   be read in light of this.
