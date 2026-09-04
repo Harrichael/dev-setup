@@ -496,7 +496,7 @@ set_default() {
 MOS_SETTINGS="smooth bool 1
 smoothSimTrackpad bool 0
 reverse bool 1
-step float 25
+step float 8
 speed float 2.2
 duration float 1.4"
 
