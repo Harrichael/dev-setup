@@ -469,8 +469,8 @@ Two apps, and neither is a window manager:
 
 | Tool | Job | Binds hotkeys? |
 | --- | --- | --- |
-| Hammerspoon | Linux-style `ctrl` editing keys, browser tab keys, app launcher, move-window-to-monitor | yes, `hammerspoon/init.lua` |
-| Mos | per-device scroll direction, speed and smoothing | no |
+| Hammerspoon | Linux-style `ctrl` editing keys, browser tab keys, app launcher, move-window-to-monitor, restart-Mos | yes, `hammerspoon/init.lua` |
+| Mos | per-device scroll direction, speed and smoothing | no -- Hammerspoon binds the restart for it |
 
 **What was tried and rejected**, so it does not get re-litigated: AeroSpace
 (workspaces are per-monitor by design, and its back-and-forth is globally MRU),
@@ -547,6 +547,19 @@ releases.
 
 **`cmd+alt+shift+←/→`** moves the focused window to the previous/next monitor.
 Nothing else provides this -- not macOS, and not any window manager tried here.
+
+**`ctrl+cmd+alt+m`** restarts Mos. Its event tap has been seen to stop
+delivering events after hours of uptime -- the mouse wheel goes dead while the
+trackpad, which Mos does not touch, keeps working -- and relaunching clears it.
+The binding earns its place because the symptom removes the scrolling you would
+need in order to go fix it by hand.
+
+It quits Mos and then SIGKILLs whatever is left. The graceful quit is first
+because Mos writes its preferences back on exit, but it cannot be the only step:
+the binding is for a Mos that has stopped behaving, and such a process need not
+answer a quit AppleEvent. The pause between the two runs on `hs.timer`, never a
+sleep -- Hammerspoon would be blocking the process that holds the `ctrl` layer's
+event tap, dropping every keystroke typed during the wait.
 
 ### Scrolling and macOS defaults
 
