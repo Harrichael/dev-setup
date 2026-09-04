@@ -98,7 +98,7 @@ vim.treesitter.query.set(
 )
 
 require'nvim-treesitter.configs'.setup {
-    ensure_installed = { "hcl", "cedar" },
+    ensure_installed = { "hcl", "cedar", "typespec" },
     highlight = {
         enable = true,
     },
