@@ -1,56 +1,3 @@
-## Comments
-
-- The bar for adding a comment: large ambiguity, or a design choice that
-  would surprise the reader. This is important and all further guidance should
-  be read in light of this.
-- When a comment is warranted, explain the why or motivation, succinctly. Never
-  just narrate the what or how of the code.
-- For tests, don't over-narrate the steps. However, a good multiline header
-  comment to introduce the test is fantastic.
-- No docstring boilerplate explaining function args, return values, etc. That is
-  what or how.
-- Do narrate footguns, but don't be pedantic.
-- Be careful not to follow the apparent comment standards of a file by a matter
-  of precedent. These instructions supersede precedent.
-- Comments are not the place to capture historic back and forth. Sometimes the
-  right call is not add and add more to a comment, but to go back and reframe
-  and even delete comments. Comments about history should be very rare.
-- For published or broadly shared libraries, consider a file-level extended
-  comment explaining how to use the module, with an example.
-    - In examples, illustrate the API generically. Concrete, evocative names
-      are good (`users`, `posts`, `author`). Don't reference specific
-      consumers, components, or features elsewhere in this project; the
-      example should stand on its own.
-
-## Tests
-
-- Ideally, good tests are:
-    - fast, with low setup
-    - refactorable: not bound to arbitrary implementation details
-    - readable and obviously correct
-    - independent and deterministic
-- Take a Classicist/Chicago approach to testing, minus the TDD aspects of tests
-  before implementation. The following details build on that position.
-- Strongly prefer simulated fixtures and fakes over mocks.
-- The implementation details that are put into tests are ossified.
-  So choose very wisely what details and levels of the stack should be
-  ossified and hard to change.
-- Test implementation behavior, not implementation details; do this by
-  verifying input and output, and unit-under-test final state (as opposed to
-  steps).
-- A good test verifies that the unit under test is obviously correct when
-  reading the test file alone. Ideally, it operates more at the story/behavior
-  level and not mechanism/detail level.
-- Refrain from very micro-unit tests; make each test really count.
-- Its okay to do "integrated" tests in "unit" tests. Scare quotes because the
-  normal terminology here is subversive to our rules here. Units proper are
-  composable, thus a "unit" test may test a set of composed (or "integrated")
-  units. This is in accordance with the Chicago approach to testing.
-- Sometimes tests will effectively test multiple files. Meaning that not every
-  file of implementation needs its own test file.
-- Mocks should be tactical and rare, and the interface that is mocked is ideally
-  simple, low surface area, not stateful, and extremely stable.
-
 ## Planning and User Interaction
 
 - Say the controversial or opinionated piece up-front. Don't bury it. The
@@ -86,20 +33,30 @@
   but only implement the methods a real caller needs.
     - The check: would a plausible future need force restructuring the data,
       or just adding a method? If restructure, the shape is wrong.
-- [IMPORTANT] Telos and YAGNI are hierarchical because shape and surface are
-  hierarchical. A module has a Telos, and is composed of files which are further
-  composed of classes and functions and so on. Each sub-component fulfills a
-  portion of the higher Telos of the higher component, while carrying its own
-  Telos. [KEY INSIGHT] Subcomposition of Telos is surface, and thus governed by
+- [IMPORTANT] Telos is hierarchical because shape is hierarchical.
+  A module has a Telos, and is composed of files which are further composed of
+  classes and functions and so on. Each sub-component fulfills a portion of the
+  higher Telos of the higher component, while carrying its own Telos. How a
+  component is sub-composed is surface.
+  [KEY INSIGHT] Subcomposition of Telos is surface, and thus governed by
   YAGNI. All further guidance is to nuance this delicate, beautiful interplay of
   Telos and YAGNI, shape and surface.
 
 ### Finer Points on Telos and YAGNI, Shape and Surface
 
-- Telos is about "knowledge" not implementation details. Exposing and coupling
-  implementation details is often unavoidable (like a field being a Vec or so
-  forth). The issue is the "wrong" implementation details leaking, but knowledge
-  (separation of concerns) is the thing that delineates right from wrong here.
+- Since Telos is hierarchical (shape/containement), common wisdom that "my
+  resolver shouldn't know table names" is completely wrong, as it MUST know. The
+  sub-composition though is goverened by YAGNI (surface/distribution).
+- Telos is about knowledge and purpose not implementation details. If a new
+  module's Telos is "let users order products," database details are in scope.
+  Hierarchy runs both ways: an existing component that owns user and product
+  data becomes a sub-component of the new one. Leave it alone if its Telos
+  already fits; change it only if it now holds too much or too little. Here
+  subcomposition is forced, not deferred: the caller is real today.
+- Telos is about knowledge and purpose not implementation details. Exposing and
+  coupling implementation details is often unavoidable (like a field being a Vec
+  or so forth). The issue is the "wrong" implementation details leaking, but
+  knowledge is the thing that delineates right from wrong here.
 - If a fundamental interface cannot be optimized without completely
   changing the interface or Telos, then its the wrong interface. We don't
   have to do the optimization right away, but it needs to be the right
@@ -111,6 +68,59 @@
       know apriori or very early the general shape of optimization AND
       abstraction, so do so. The frontier of abstraction and optimization should
       be data and utility driven.
+
+## Tests
+
+- Ideally, good tests are:
+    - fast, with low setup
+    - refactorable: not bound to arbitrary implementation details
+    - readable and obviously correct
+    - independent and deterministic
+- Take a Classicist/Chicago approach to testing, minus the TDD aspects of tests
+  before implementation. The following details build on that position.
+- Strongly prefer simulated fixtures and fakes over mocks.
+- The implementation details that are put into tests are ossified.
+  So choose very wisely what details and levels of the stack should be
+  ossified and hard to change.
+- Test implementation behavior, not implementation details; do this by
+  verifying input and output, and unit-under-test final state (as opposed to
+  steps).
+- A good test verifies that the unit under test is obviously correct when
+  reading the test file alone. Ideally, it operates more at the story/behavior
+  level and not mechanism/detail level.
+- Refrain from very micro-unit tests; make each test really count.
+- Its okay to do "integrated" tests in "unit" tests. Scare quotes because the
+  normal terminology here is subversive to our rules here. Units proper are
+  composable, thus a "unit" test may test a set of composed (or "integrated")
+  units. This is in accordance with the Chicago approach to testing.
+- Sometimes tests will effectively test multiple files. Meaning that not every
+  file of implementation needs its own test file.
+- Mocks should be tactical and rare, and the interface that is mocked is ideally
+  simple, low surface area, not stateful, and extremely stable.
+
+## Comments
+
+- The bar for adding a comment: large ambiguity, or a design choice that
+  would surprise the reader. This is important and all further guidance should
+  be read in light of this.
+- When a comment is warranted, explain the why or motivation, succinctly. Never
+  just narrate the what or how of the code.
+- For tests, don't over-narrate the steps. However, a good multiline header
+  comment to introduce the test is fantastic.
+- No docstring boilerplate explaining function args, return values, etc. That is
+  what or how.
+- Do narrate footguns, but don't be pedantic.
+- Be careful not to follow the apparent comment standards of a file by a matter
+  of precedent. These instructions supersede precedent.
+- Comments are not the place to capture historic back and forth. Sometimes the
+  right call is not add and add more to a comment, but to go back and reframe
+  and even delete comments. Comments about history should be very rare.
+- For published or broadly shared libraries, consider a file-level extended
+  comment explaining how to use the module, with an example.
+    - In examples, illustrate the API generically. Concrete, evocative names
+      are good (`users`, `posts`, `author`). Don't reference specific
+      consumers, components, or features elsewhere in this project; the
+      example should stand on its own.
 
 ## Agentic Scope
 
