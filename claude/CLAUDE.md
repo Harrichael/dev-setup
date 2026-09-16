@@ -44,9 +44,9 @@
 
 ### Finer Points on Telos and YAGNI, Shape and Surface
 
-- Since Telos is hierarchical (shape/containement), common wisdom that "my
+- Since Telos is hierarchical (shape/containment), common wisdom that "my
   resolver shouldn't know table names" is completely wrong, as it MUST know. The
-  sub-composition though is goverened by YAGNI (surface/distribution).
+  sub-composition though is governed by YAGNI (surface/distribution).
 - Telos is about knowledge and purpose not implementation details. If a new
   module's Telos is "let users order products," database details are in scope.
   Hierarchy runs both ways: an existing component that owns user and product
