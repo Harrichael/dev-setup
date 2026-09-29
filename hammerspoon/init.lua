@@ -259,6 +259,13 @@ end
 
 hs.hotkey.bind({ "ctrl", "cmd", "alt" }, "m", restartMos)
 
+--------------------------------------------------------------------------------
+-- Lock the screen
+--------------------------------------------------------------------------------
+-- ctrl+cmd, not bare cmd+l: that is the address bar in every browser, and a
+-- cmd chord cannot be bound without taking it from every app (see the launcher).
+hs.hotkey.bind({ "ctrl", "cmd" }, "l", hs.caffeinate.lockScreen)
+
 
 --------------------------------------------------------------------------------
 -- Introspection helpers, callable from the shell via `hs -c`
