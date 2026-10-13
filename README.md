@@ -592,11 +592,10 @@ impossible to express there. The pair above is the workaround — natural global
 reversed again by LinearMouse for devices matching `category: mouse`, which
 leaves the trackpad alone. Neither half is meaningful alone.
 
-#### Why LinearMouse and not Mos
+#### Why LinearMouse
 
-**macOS scroll acceleration cannot be turned off, and this repo used to claim it
-could.** `com.apple.scrollwheel.scaling = -1` was here for exactly that, and it
-does nothing: macOS consults the acceleration curve *before* it reads that value.
+**macOS scroll acceleration cannot be turned off.** `com.apple.scrollwheel.scaling
+= -1` looks like it should do it, and it does nothing: macOS consults the acceleration curve *before* it reads that value.
 Neither does setting `HIDScrollAcceleration` or `HIDMouseScrollAcceleration`
 negative via `hidutil` — both were tried and measured.
 
@@ -618,16 +617,9 @@ burst reads as 27 notches in 250 ms, which on a 24-detent ratcheted wheel would
 be four and a half revolutions per second. It was nine detents. Both delta fields
 are corrupted; the only field that survives is the *sign* of each event.
 
-Mos cannot work around this, which is why no amount of retuning fixed it. Mos
-consumes the inflated pixel delta (`ScrollCore.swift`) and its `step` is a
-**floor**, not a multiplier — `max(|delta|, step)`. So `step` flattened the bottom
-of the acceleration curve and left the top of it fully intact: slow scrolling felt
-consistent, which made the fast case look like a separate bug.
-
 LinearMouse discards both corrupted fields and rewrites each event as
 `sign × distance`, so every detent travels identically by construction. That
-makes `distance` a true multiplier and the only pace knob — unlike Mos `step`,
-turning it down cannot reintroduce the jump.
+makes `distance` a true multiplier and the only pace knob.
 
 **WindowServer reads `com.apple.mouse.scaling` at login**, so pointer speed does
 nothing until you log out and back in. `install.sh` says so when it changes it.

@@ -27,17 +27,14 @@ cask "linearmouse"  # per-device scroll: see the scrolling note below
 # Trackpad and Mouse panes are views onto it, so it cannot differ per device.
 # LinearMouse matches on device category, so:
 #   macOS natural scrolling ON        -> trackpad scrolls naturally
-#   LinearMouse reverse.vertical      -> external mouse scrolls traditionally,
+#   LinearMouse scrolling.reverse     -> external mouse scrolls traditionally,
 #                                        scoped to `device.category = mouse`
 #
-# LinearMouse rather than Mos because of scroll ACCELERATION, which is the whole
-# reason for the switch. macOS inflates a single wheel detent by up to ~14x
-# depending only on how fast the previous detent arrived, and that inflation
-# cannot be disabled -- not by com.apple.scrollwheel.scaling, not by hidutil.
-# Mos consumed the already-inflated pixel delta and only floored it (its `step`
-# is a minimum, not a multiplier), so a fast flick jumped. LinearMouse discards
-# the inflated fields and rewrites each event as sign x a fixed distance, so
-# every detent travels the same distance by construction.
+# LinearMouse also fixes scroll ACCELERATION. macOS inflates a single wheel
+# detent by up to ~14x depending only on how fast the previous detent arrived,
+# and that inflation cannot be disabled -- not by com.apple.scrollwheel.scaling,
+# not by hidutil. LinearMouse discards the inflated fields and rewrites each
+# event as sign x a fixed distance, so every detent travels the same distance.
 #
 # install.sh wires the config and writes the macOS half -- see wire_linearmouse
 # and apply_macos_defaults there. Installing the cask is not enough on its own.
