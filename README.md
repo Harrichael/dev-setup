@@ -137,6 +137,7 @@ re-run with everything installed takes about a second.
 | kitty | Wires `~/.config/kitty/kitty.conf` to include this repo's shared + per-OS kitty config. |
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
 | hammerspoon | macOS only. Wires `~/.hammerspoon/init.lua` to `dofile` this repo's `hammerspoon/init.lua`. |
+| linearmouse | macOS only. Symlinks `~/.config/linearmouse/linearmouse.json` to this repo's copy, moving any regular file aside first. |
 | dev-setup source | Pulls the pristine checkout the dotfiles point at, into `~/.local/share/dev-setup/self`. Runs before wiring so paths are recorded once. |
 | Development clones | Interactive, optional. Clones dev-setup and the tool repos into a workspace registry so a choros can hack on them. Nothing is installed from these. |
 | Dotfiles | Wires `~/.zshrc` or `~/.bashrc`, `~/.gitconfig`, and `~/.config/nvim/init.lua`, creating each if absent. |
@@ -169,6 +170,12 @@ export BASE_PATH="$HOME"
 source "<SELF_DIR>/zshrc"
 # <<< dev-setup <<<
 ```
+
+**One exception:** `linearmouse.json`. JSON has no include directive and no
+comment syntax, so there is no block to append and nowhere to put a sentinel —
+it is wired by symlink instead. Same by-reference intent, and the only file here
+that a *tool* also writes to. See
+[Scrolling and macOS defaults](#scrolling-and-macos-defaults).
 
 **Which checkout matters.** That path is *not* the clone you ran `install.sh`
 from. It's a pristine one at
@@ -469,8 +476,8 @@ Two apps, and neither is a window manager:
 
 | Tool | Job | Binds hotkeys? |
 | --- | --- | --- |
-| Hammerspoon | Linux-style `ctrl` editing keys, browser tab keys, app launcher, move-window-to-monitor, restart-Mos | yes, `hammerspoon/init.lua` |
-| Mos | per-device scroll direction, speed and smoothing | no -- Hammerspoon binds the restart for it |
+| Hammerspoon | Linux-style `ctrl` editing keys, browser tab keys, app launcher, move-window-to-monitor, restart-scroll-handler | yes, `hammerspoon/init.lua` |
+| LinearMouse | per-device scroll direction and per-detent distance | no -- Hammerspoon binds the restart for it |
 
 **What was tried and rejected**, so it does not get re-litigated: AeroSpace
 (workspaces are per-monitor by design, and its back-and-forth is globally MRU),
@@ -548,16 +555,16 @@ releases.
 **`cmd+alt+shift+←/→`** moves the focused window to the previous/next monitor.
 Nothing else provides this -- not macOS, and not any window manager tried here.
 
-**`ctrl+cmd+alt+m`** restarts Mos. Its event tap has been seen to stop
+**`ctrl+cmd+alt+m`** restarts LinearMouse. Its event tap has been seen to stop
 delivering events after hours of uptime -- the mouse wheel goes dead while the
-trackpad, which Mos does not touch, keeps working -- and relaunching clears it.
-The binding earns its place because the symptom removes the scrolling you would
-need in order to go fix it by hand.
+trackpad, which the mouse-scoped scheme does not touch, keeps working -- and
+relaunching clears it. The binding earns its place because the symptom removes
+the scrolling you would need in order to go fix it by hand.
 
-It quits Mos and then SIGKILLs whatever is left. The graceful quit is first
-because Mos writes its preferences back on exit, but it cannot be the only step:
-the binding is for a Mos that has stopped behaving, and such a process need not
-answer a quit AppleEvent. The pause between the two runs on `hs.timer`, never a
+It quits LinearMouse and then SIGKILLs whatever is left. The graceful quit is
+first so the app can tear its tap down cleanly, but it cannot be the only step:
+the binding is for a process that has stopped behaving, and such a process need
+not answer a quit AppleEvent. The pause between the two runs on `hs.timer`, never a
 sleep -- Hammerspoon would be blocking the process that holds the `ctrl` layer's
 event tap, dropping every keystroke typed during the wait.
 
@@ -571,36 +578,76 @@ import would also carry window positions and update timestamps.
 | Setting | Value | Why |
 | --- | --- | --- |
 | `com.apple.swipescrolldirection` | `1` | natural scrolling, for the trackpad |
-| Mos `reverse` | `1` | flips the **wheel** back to traditional |
-| `com.apple.scrollwheel.scaling` | `-1` | wheel acceleration **off** |
-| Mos `step` / `speed` / `duration` | `8` / `2.2` / `2.8` | the pace and smoothing |
-| Mos `smoothSimTrackpad` | `0` | Mos ignores the trackpad entirely |
+| LinearMouse `scrolling.reverse` | `true` | flips the **wheel** back to traditional |
+| LinearMouse `scrolling.distance` | `70px` | how far one detent travels — the pace knob |
 | `com.apple.mouse.scaling` | `1.5` | pointer speed |
 | `com.apple.dock mru-spaces` | `0` | stop Spaces reordering themselves |
+
+The LinearMouse rows live in `linearmouse/linearmouse.json`, not in
+`apply_macos_defaults`; only the `com.apple.*` rows are `defaults write`.
 
 Direction is the awkward one: macOS has exactly **one** scroll-direction key and
 both the Trackpad and Mouse panes are views onto it, so per-device direction is
 impossible to express there. The pair above is the workaround — natural globally,
-reversed again by Mos for discrete wheel events only. Neither half is meaningful
-alone.
+reversed again by LinearMouse for devices matching `category: mouse`, which
+leaves the trackpad alone. Neither half is meaningful alone.
 
-Acceleration is the other. Any *positive* `scrollwheel.scaling` re-enables macOS's
-curve, which damps slow scrolling and multiplies fast scrolling; it is felt as a
-breakpoint where the page abruptly flies. `-1` disables it, making a fast spin
-simply more notches of equal size — after which Mos `step` is the only thing
-setting the pace, and the one value to expect to retune.
+#### Why LinearMouse and not Mos
 
-**WindowServer reads the scaling keys at login**, so those two do nothing until
-you log out and back in. `install.sh` says so when it changes one. Mos, by
-contrast, holds prefs in memory and writes them back on exit, so `install.sh`
-quits it before writing and relaunches after — writing underneath a running Mos
-is silently undone.
+**macOS scroll acceleration cannot be turned off, and this repo used to claim it
+could.** `com.apple.scrollwheel.scaling = -1` was here for exactly that, and it
+does nothing: macOS consults the acceleration curve *before* it reads that value.
+Neither does setting `HIDScrollAcceleration` or `HIDMouseScrollAcceleration`
+negative via `hidutil` — both were tried and measured.
+
+What acceleration actually does, measured with a listen-only event tap on a
+Logitech G903 (`line` is the wheel-notch count macOS reports, `POINT` its pixel
+delta):
+
+```
+gap 2666.6ms  line 1  POINT  1     <- isolated detent
+gap   23.9ms  line 1  POINT  7
+gap   15.8ms  line 2  POINT 24
+gap   15.2ms  line 3  POINT 34
+gap   38.0ms  line 5  POINT 56
+```
+
+One physical detent is worth 1 to ~14 px depending only on how recently the
+previous one arrived. Note that macOS inflates the **line count** too — that
+burst reads as 27 notches in 250 ms, which on a 24-detent ratcheted wheel would
+be four and a half revolutions per second. It was nine detents. Both delta fields
+are corrupted; the only field that survives is the *sign* of each event.
+
+Mos cannot work around this, which is why no amount of retuning fixed it. Mos
+consumes the inflated pixel delta (`ScrollCore.swift`) and its `step` is a
+**floor**, not a multiplier — `max(|delta|, step)`. So `step` flattened the bottom
+of the acceleration curve and left the top of it fully intact: slow scrolling felt
+consistent, which made the fast case look like a separate bug.
+
+LinearMouse discards both corrupted fields and rewrites each event as
+`sign × distance`, so every detent travels identically by construction. That
+makes `distance` a true multiplier and the only pace knob — unlike Mos `step`,
+turning it down cannot reintroduce the jump.
+
+**WindowServer reads `com.apple.mouse.scaling` at login**, so pointer speed does
+nothing until you log out and back in. `install.sh` says so when it changes it.
 
 Not set: `com.apple.spaces spans-displays`. It sits at the macOS default (`0`,
 displays get separate Spaces), so there is no opinion to enforce; set it to `1`
 if you want one Space spanning every monitor, and log out.
 
-**Manual step Mos needs:** grant it Accessibility. No script can.
+**Manual step LinearMouse needs:** grant it Accessibility. No script can.
+
+**Gotcha:** `linearmouse.json` is wired by **symlink**, the only dotfile here that
+is — JSON has no include directive, so there is no block to append.
+
+LinearMouse rewrites this file whenever you change something in its UI. It writes
+*through* the symlink, so the link survives and UI changes land in the repo — but
+it reformats as it goes (escaped slashes, keys reordered, `{"vertical": …}`
+collapsed to a scalar), so do not expect hand-formatting to stick. It also holds
+config in memory and can write it back on quit, so **quit LinearMouse before
+editing the file by hand**, or your edit will be overwritten. `./install.sh`
+restores the link if it is ever lost, moving any regular file aside first.
 
 **Required manual step:** disable *Move left/right a space* in System Settings >
 Keyboard > Keyboard Shortcuts > Mission Control. WindowServer handles those above

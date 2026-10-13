@@ -221,43 +221,43 @@ for key, bundleID in pairs(LAUNCH) do
 end
 
 --------------------------------------------------------------------------------
--- Restart Mos, the scroll handler
+-- Restart LinearMouse, the scroll handler
 --------------------------------------------------------------------------------
--- Mos drives the external mouse wheel through an event tap, and that tap has
--- been seen to stop delivering events after hours of uptime: the wheel goes dead
--- while the trackpad, which Mos does not touch, keeps working. Relaunching
--- clears it. This is worth a binding because the failure takes away the very
--- scrolling you would need to go fix it by hand.
+-- LinearMouse drives the external mouse wheel through an event tap, and such a
+-- tap has been seen to stop delivering events after hours of uptime: the wheel
+-- goes dead while the trackpad, which the mouse-scoped scheme does not touch,
+-- keeps working. Relaunching clears it. This is worth a binding because the
+-- failure takes away the very scrolling you would need to go fix it by hand.
 --
--- Quit, then SIGKILL whatever is still there. The graceful quit comes first
--- because Mos writes its preferences back on exit, but it cannot be relied on
--- alone: the binding exists precisely for a Mos that has stopped behaving, and
--- a process in that state need not answer a quit AppleEvent.
+-- Quit, then SIGKILL whatever is still there. The graceful quit comes first so
+-- the app can tear its tap down cleanly, but it cannot be relied on alone: the
+-- binding exists precisely for a process that has stopped behaving, and such a
+-- process need not answer a quit AppleEvent.
 --
 -- The pause runs on hs.timer rather than a sleep. That is not a style choice --
 -- this is the same process as keyLayer above, so blocking it would stall that
 -- event tap too and swallow every keystroke typed during the wait.
-local MOS_BUNDLE_ID = "com.caldis.Mos"
+local SCROLL_BUNDLE_ID = "com.lujjjh.LinearMouse"
 
-local function restartMos()
-  local mos = hs.application.get(MOS_BUNDLE_ID)
-  if mos then mos:kill() end
+local function restartScrollHandler()
+  local app = hs.application.get(SCROLL_BUNDLE_ID)
+  if app then app:kill() end
 
   hs.timer.doAfter(1, function()
-    local surviving = hs.application.get(MOS_BUNDLE_ID)
+    local surviving = hs.application.get(SCROLL_BUNDLE_ID)
     if surviving then surviving:kill9() end
 
     hs.timer.doAfter(0.5, function()
-      if hs.application.launchOrFocusByBundleID(MOS_BUNDLE_ID) then
-        hs.alert.show("Mos restarted")
+      if hs.application.launchOrFocusByBundleID(SCROLL_BUNDLE_ID) then
+        hs.alert.show("LinearMouse restarted")
       else
-        hs.alert.show("Mos: not installed")
+        hs.alert.show("LinearMouse: not installed")
       end
     end)
   end)
 end
 
-hs.hotkey.bind({ "ctrl", "cmd", "alt" }, "m", restartMos)
+hs.hotkey.bind({ "ctrl", "cmd", "alt" }, "m", restartScrollHandler)
 
 --------------------------------------------------------------------------------
 -- Lock the screen
