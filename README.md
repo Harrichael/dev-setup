@@ -132,12 +132,13 @@ re-run with everything installed takes about a second.
 | Step | Action |
 | --- | --- |
 | Packages | macOS: `brew bundle`. Linux: prints the list to install yourself. |
-| Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, and sets a per-workspace git identity. |
+| Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, sets a per-workspace git identity, and offers a per-workspace `gh auth login` (each workspace gets its own `.choros-config/gh`). |
 | Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.local/share/dev-setup/tools/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
 | kitty | Wires `~/.config/kitty/kitty.conf` to include this repo's shared + per-OS kitty config. |
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
 | hammerspoon | macOS only. Wires `~/.hammerspoon/init.lua` to `dofile` this repo's `hammerspoon/init.lua`. |
 | linearmouse | macOS only. Symlinks `~/.config/linearmouse/linearmouse.json` to this repo's copy, moving any regular file aside first. Writes a LaunchAgent so LinearMouse starts at login; it takes effect at the next login. |
+| gh shim | Symlinks `~/.local/bin/gh` to this repo's `gh/gh`, which runs the real `gh` with the account of the workspace you are in. |
 | dev-setup source | Pulls the pristine checkout the dotfiles point at, into `~/.local/share/dev-setup/self`. Runs before wiring so paths are recorded once. |
 | Development clones | Interactive, optional. Clones dev-setup and the tool repos into a workspace registry so a choros can hack on them. Nothing is installed from these. |
 | Dotfiles | Wires `~/.zshrc` or `~/.bashrc`, `~/.gitconfig`, and `~/.config/nvim/init.lua`, creating each if absent. |

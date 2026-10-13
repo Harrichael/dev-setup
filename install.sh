@@ -80,6 +80,7 @@ install_packages() {
     echo "    sudo apt install neovim git tree ripgrep kitty fonts-jetbrains-mono"
     echo "    git-delta: https://github.com/dandavison/delta/releases"
     echo "    fnm:       curl -fsSL https://fnm.vercel.app/install | bash"
+    echo "    gh:        https://github.com/cli/cli/blob/trunk/docs/install_linux.md"
   fi
 }
 
@@ -471,6 +472,29 @@ wire_hammerspoon() {
              "$WIRE_DIR/hammerspoon/init.lua"
 }
 
+# Linked rather than copied, so a pull updates it. It shadows the real gh from
+# ~/.local/bin, which zshrc/bashrc put ahead of Homebrew on PATH.
+wire_gh() {
+  echo "==> gh shim"
+  local src="$WIRE_DIR/gh/gh"
+  local dst="$HOME/.local/bin/gh"
+  mkdir -p "$(dirname "$dst")"
+
+  if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
+    echo "    already current: $dst"
+    return 0
+  fi
+  # A hand-installed copy of this same shim is replaced silently; anything else
+  # is not ours to delete, so it moves aside.
+  if [ -e "$dst" ] && [ ! -L "$dst" ] && ! cmp -s "$dst" "$src"; then
+    local backup="$dst.pre-dev-setup.$(date +%Y%m%d%H%M%S)"
+    mv "$dst" "$backup"
+    echo "    moved existing gh aside: $backup"
+  fi
+  ln -sfn "$src" "$dst"
+  echo "    wired: $dst -> $src"
+}
+
 # LinearMouse owns the external mouse wheel. Its config is JSON, which has no
 # include directive and no comment syntax, so this is the one dotfile wired by
 # SYMLINK rather than by an include block -- and the reason the "why" for those
@@ -749,6 +773,30 @@ setup_workspace_identity() {
 	path = $cfg" "gitdir:$root/" "dev-setup identity $root"
 }
 
+# gh has one active account per config dir, so each workspace gets its own dir
+# and the gh shim (gh/gh) picks it by cwd -- the same rule git identity follows.
+# Logging in opens a browser, so it is offered, never assumed.
+setup_workspace_gh() {
+  local root="${1%/}" dir
+  dir="$root/.choros-config/gh"
+  mkdir -p "$dir"
+
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "    gh not installed, login skipped (later: cd $root && gh auth login)"
+    return 0
+  fi
+  if GH_CONFIG_DIR="$dir" gh auth status >/dev/null 2>&1; then
+    echo "    gh: already logged in for $root"
+    return 0
+  fi
+  if ask_yn "    Log in to GitHub (gh) for $root now?" y; then
+    GH_CONFIG_DIR="$dir" gh auth login \
+      || echo "    !! gh auth login failed (later: cd $root && gh auth login)"
+  else
+    echo "    gh: later, run: cd $root && gh auth login"
+  fi
+}
+
 setup_one_workspace() {
   local root reg clone
   root="$(abs_path "$(ask_line "    Workspace directory:" "")")"
@@ -810,6 +858,7 @@ setup_one_workspace() {
   fi
 
   setup_workspace_identity "$root"
+  setup_workspace_gh "$root"
   WORKSPACES="$WORKSPACES$root
 "
   return 0
@@ -1207,6 +1256,7 @@ wire_kitty
 wire_claude
 wire_hammerspoon
 wire_linearmouse
+wire_gh
 apply_macos_defaults
 echo
 setup_node

@@ -9,6 +9,7 @@ brew "git-delta" # required by the `git delta` alias in gitconfig
 brew "fnm"       # node version manager, wired up in bashrc/zshrc
 brew "tree"      # required by the `gtree` alias
 brew "ripgrep"
+brew "gh"        # wrapped by gh/gh, which picks the account per workspace
 
 cask "kitty"                          # terminal; draws its own tab bar, so a
                                       # tiling WM sees one window, not one per tab

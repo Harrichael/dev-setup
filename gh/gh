@@ -1,0 +1,74 @@
+#!/bin/sh
+# GitHub CLI, routed to the identity of the workspace that owns the cwd.
+#
+# gh has exactly one active account, switched globally with `gh auth switch`,
+# which makes identity a mode you can forget you are in -- and pushing or
+# opening a PR as the wrong account is not something you notice until after.
+# The workspace already decides who you are by directory, so GH_CONFIG_DIR
+# follows the same rule: it holds hosts.yml, and hosts.yml is what names the
+# active account.
+#
+# A shim rather than a shell function because gh is shelled out to constantly --
+# by scripts, editors, extensions, agents -- and none of those read an
+# interactive rc, so a function would leave every one of them on the default
+# account while looking, in your own terminal, like the mapping worked.
+#
+# Nothing here calls an external command. A shim that shadows the tool it wraps
+# has one catastrophic failure mode: mistaking itself for the real binary and
+# exec'ing itself forever. Under a stripped PATH -- which is exactly the
+# environment a cron job or a sandboxed agent hands it -- a `dirname` that
+# cannot be found is enough to cause that, so the resolution is done with shell
+# builtins that cannot go missing, and guarded besides.
+
+if [ -n "${GH_SHIM_ACTIVE:-}" ]; then
+  echo "gh: shim re-entered itself; no real gh on PATH beyond $0" >&2
+  exit 127
+fi
+GH_SHIM_ACTIVE=1
+export GH_SHIM_ACTIVE
+
+self="$0"
+case "$self" in
+  */*) self_dir="${self%/*}" ;;
+  *)   self_dir="." ;;
+esac
+self_dir="$(cd "$self_dir" && pwd -P)"
+
+# The real gh is the next one on PATH. Resolved at run time rather than pinned
+# at install time so a brew prefix change (or an Intel/ARM move) can't leave
+# this pointing at a binary that is no longer there.
+real=""
+saved_ifs="$IFS"
+IFS=:
+for dir in $PATH; do
+  [ -n "$dir" ] || dir="."
+  case "$(cd "$dir" 2>/dev/null && pwd -P)" in
+    ""|"$self_dir") continue ;;
+  esac
+  if [ -x "$dir/gh" ] && [ ! "$dir/gh" -ef "$self" ]; then
+    real="$dir/gh"
+    break
+  fi
+done
+IFS="$saved_ifs"
+
+if [ -z "$real" ]; then
+  echo "gh: the GitHub CLI is not on PATH (only this shim at $self_dir)" >&2
+  exit 127
+fi
+
+# An explicit GH_CONFIG_DIR wins: it is how you reach one identity's config
+# from outside its tree, and how `gh auth login` gets aimed at a fresh one.
+if [ -z "${GH_CONFIG_DIR:-}" ]; then
+  root="$(pwd -P)"
+  while [ -n "$root" ] && [ "$root" != "/" ]; do
+    if [ -d "$root/.choros-config/registry" ]; then
+      GH_CONFIG_DIR="$root/.choros-config/gh"
+      export GH_CONFIG_DIR
+      break
+    fi
+    root="${root%/*}"
+  done
+fi
+
+exec "$real" "$@"
