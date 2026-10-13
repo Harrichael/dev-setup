@@ -137,7 +137,7 @@ re-run with everything installed takes about a second.
 | kitty | Wires `~/.config/kitty/kitty.conf` to include this repo's shared + per-OS kitty config. |
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
 | hammerspoon | macOS only. Wires `~/.hammerspoon/init.lua` to `dofile` this repo's `hammerspoon/init.lua`. |
-| linearmouse | macOS only. Symlinks `~/.config/linearmouse/linearmouse.json` to this repo's copy, moving any regular file aside first. |
+| linearmouse | macOS only. Symlinks `~/.config/linearmouse/linearmouse.json` to this repo's copy, moving any regular file aside first. Writes a LaunchAgent so LinearMouse starts at login; it takes effect at the next login. |
 | dev-setup source | Pulls the pristine checkout the dotfiles point at, into `~/.local/share/dev-setup/self`. Runs before wiring so paths are recorded once. |
 | Development clones | Interactive, optional. Clones dev-setup and the tool repos into a workspace registry so a choros can hack on them. Nothing is installed from these. |
 | Dotfiles | Wires `~/.zshrc` or `~/.bashrc`, `~/.gitconfig`, and `~/.config/nvim/init.lua`, creating each if absent. |

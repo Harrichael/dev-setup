@@ -491,19 +491,63 @@ wire_linearmouse() {
 
   if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
     echo "    already current: $dst"
+  else
+    # A regular file here is either the app's own default or a hand-written
+    # config. Neither is ours to delete, so it moves aside rather than being
+    # overwritten.
+    if [ -e "$dst" ] && [ ! -L "$dst" ]; then
+      local backup="$dst.pre-dev-setup.$(date +%Y%m%d%H%M%S)"
+      mv "$dst" "$backup"
+      echo "    moved existing config aside: $backup"
+    fi
+    ln -sfn "$src" "$dst"
+    echo "    wired: $dst -> $src"
+  fi
+
+  login_agent com.lujjjh.LinearMouse
+}
+
+# Start an app at login with a LaunchAgent rather than a System Settings login
+# item. A login item can only be added by scripting System Events, which needs an
+# Automation grant; a LaunchAgent is a plain file, so writing it is idempotent.
+# `open -b` rather than the app's binary, so LaunchServices launches the app as
+# itself -- Accessibility is granted to the app, and this finds it wherever it
+# is installed.
+#
+# The agent is written, not loaded: it takes effect at the next login, and
+# re-running install.sh never launches the app.
+login_agent() {
+  local bundle_id="$1"
+  local label="dev-setup.$bundle_id"
+  local plist="$HOME/Library/LaunchAgents/$label.plist"
+  local want
+  want="$(cat <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>$label</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/open</string>
+		<string>-b</string>
+		<string>$bundle_id</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+</dict>
+</plist>
+PLIST
+)"
+
+  if [ -f "$plist" ] && [ "$(cat "$plist")" = "$want" ]; then
+    echo "    already current: $plist"
     return 0
   fi
-
-  # A regular file here is either the app's own default or a hand-written config.
-  # Neither is ours to delete, so it moves aside rather than being overwritten.
-  if [ -e "$dst" ] && [ ! -L "$dst" ]; then
-    local backup="$dst.pre-dev-setup.$(date +%Y%m%d%H%M%S)"
-    mv "$dst" "$backup"
-    echo "    moved existing config aside: $backup"
-  fi
-
-  ln -sfn "$src" "$dst"
-  echo "    wired: $dst -> $src"
+  mkdir -p "$(dirname "$plist")"
+  printf '%s\n' "$want" > "$plist"
+  echo "    starts at login: $plist"
 }
 
 # macOS keeps these in cfprefsd, per user. They are environment rather than
