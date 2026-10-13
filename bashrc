@@ -123,6 +123,10 @@ ssgr() {
 
 [ -d /snap/bin ] && export PATH="/snap/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
+# `go install` always deposits here (GOBIN, else GOPATH/bin) and nothing
+# else puts it on PATH, so a go-installed tool is present but invisible
+# until this line runs. Before .local/bin, which still has to win.
+export PATH="$HOME/go/bin:$PATH"
 # After .cargo/bin, so it lands ahead of it: tools install themselves here, and
 # if a superseded cargo-installed copy ever reappears the self-installed one
 # shadows it rather than the other way round.
