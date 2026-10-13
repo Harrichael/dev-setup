@@ -1086,6 +1086,23 @@ install_tools() {
   IFS="$oldifs"
 }
 
+# Install only. Cerebro ships no package, so its own get-cerebro.sh builds it
+# from source; keeping it current is Cerebro's job, not dev-setup's, the same as
+# brew owns updating what the Brewfile installs. So once it is present this step
+# never runs the installer again.
+install_cerebro() {
+  echo "==> cerebro"
+  # A fresh machine has not sourced the new shell rc yet, so ~/.local/bin may
+  # not be on PATH even when cerebro is already sitting there.
+  if command -v cerebro >/dev/null 2>&1 || [ -x "$HOME/.local/bin/cerebro" ]; then
+    echo "    already installed (updates are Cerebro's: re-run get-cerebro.sh)"
+    return 0
+  fi
+  ensure_rust || { echo "    !! cargo unavailable, cerebro skipped"; return 0; }
+  curl -fsSL https://raw.githubusercontent.com/Harrichael/Cerebro/main/get-cerebro.sh | bash \
+    || echo "    !! get-cerebro.sh failed -- nothing was installed"
+}
+
 # A registry copy of a tool may be a deliberate development clone (see
 # register_dev_sources) or leftover from when installs came from the registry.
 # Either way nothing installs from it, and it looks identical to the checkout
@@ -1247,6 +1264,7 @@ echo
 setup_workspaces
 install_self
 install_tools
+install_cerebro
 register_dev_sources
 echo
 wire_shell

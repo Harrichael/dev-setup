@@ -134,6 +134,7 @@ re-run with everything installed takes about a second.
 | Packages | macOS: `brew bundle`. Linux: prints the list to install yourself. |
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, sets a per-workspace git identity, and offers a per-workspace `gh auth login` (each workspace gets its own `.choros-config/gh`). |
 | Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.local/share/dev-setup/tools/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
+| Cerebro | Installs `cerebro` with its own `get-cerebro.sh` (built from source) if it is not already in `~/.local/bin`. Install only: updating it is Cerebro's job. |
 | kitty | Wires `~/.config/kitty/kitty.conf` to include this repo's shared + per-OS kitty config. |
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
 | hammerspoon | macOS only. Wires `~/.hammerspoon/init.lua` to `dofile` this repo's `hammerspoon/init.lua`. |
