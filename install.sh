@@ -531,18 +531,15 @@ wire_linearmouse() {
   login_agent com.lujjjh.LinearMouse
 }
 
-# Start an app at login with a LaunchAgent rather than a System Settings login
+# Start things at login with a LaunchAgent rather than a System Settings login
 # item. A login item can only be added by scripting System Events, which needs an
 # Automation grant; a LaunchAgent is a plain file, so writing it is idempotent.
-# `open -b` rather than the app's binary, so LaunchServices launches the app as
-# itself -- Accessibility is granted to the app, and this finds it wherever it
-# is installed.
 #
-# The agent is written, not loaded: it takes effect at the next login, and
-# re-running install.sh never launches the app.
-login_agent() {
-  local bundle_id="$1"
-  local label="dev-setup.$bundle_id"
+# Agents are written, not loaded: they take effect at the next login, and
+# re-running install.sh never launches anything. Each caller supplies the keys
+# after Label, because how a thing must be started is its own knowledge.
+write_launch_agent() {
+  local label="$1" body="$2"
   local plist="$HOME/Library/LaunchAgents/$label.plist"
   local want
   want="$(cat <<PLIST
@@ -552,14 +549,7 @@ login_agent() {
 <dict>
 	<key>Label</key>
 	<string>$label</string>
-	<key>ProgramArguments</key>
-	<array>
-		<string>/usr/bin/open</string>
-		<string>-b</string>
-		<string>$bundle_id</string>
-	</array>
-	<key>RunAtLoad</key>
-	<true/>
+$body
 </dict>
 </plist>
 PLIST
@@ -572,6 +562,68 @@ PLIST
   mkdir -p "$(dirname "$plist")"
   printf '%s\n' "$want" > "$plist"
   echo "    starts at login: $plist"
+}
+
+# For an ordinary app. `open -b` rather than the app's binary, so LaunchServices
+# launches the app as itself -- Accessibility is granted to the app, and this
+# finds it wherever it is installed.
+login_agent() {
+  local bundle_id="$1"
+  write_launch_agent "dev-setup.$bundle_id" "	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/open</string>
+		<string>-b</string>
+		<string>$bundle_id</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>"
+}
+
+# Install only, like Cerebro: get-ordo.sh builds and signs Ordo.app, and keeping
+# it current is Ordo's job. The stable signature is why it must be that script
+# and not a plain cargo build -- Accessibility is bound to the signature, and an
+# ad-hoc one changes every build, silently voiding the grant.
+#
+# Unlike LinearMouse, Ordo is a daemon, not an app with a window to open, so
+# launchd runs the binary inside the bundle (macOS still charges Accessibility to
+# Ordo.app) and restarts it after a crash, but not after a clean stop. Plain
+# `run` starts it engaged. A copy started by hand wins the lock and this one
+# exits 1, so launchd keeps retrying and takes over when that copy stops --
+# restart with launchctl kickstart -k to avoid the wait.
+install_ordo() {
+  [ "$OS" = macos ] || return 0
+  echo "==> ordo"
+  local app="$HOME/Applications/Ordo.app"
+
+  if [ -d "$app" ]; then
+    echo "    already installed (updates are Ordo's: re-run get-ordo.sh)"
+  else
+    ensure_rust || { echo "    !! cargo unavailable, ordo skipped"; return 0; }
+    if ! curl -fsSL https://raw.githubusercontent.com/Harrichael/Ordo/main/get-ordo.sh | bash; then
+      echo "    !! get-ordo.sh failed -- nothing was installed"
+      return 0
+    fi
+  fi
+
+  write_launch_agent "dev-setup.com.harrichael.ordo" "	<key>ProgramArguments</key>
+	<array>
+		<string>$app/Contents/MacOS/ordo</string>
+		<string>run</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>ThrottleInterval</key>
+	<integer>10</integer>
+	<key>StandardOutPath</key>
+	<string>$HOME/Library/Logs/ordo.log</string>
+	<key>StandardErrorPath</key>
+	<string>$HOME/Library/Logs/ordo.log</string>"
+  echo "    manual, once: add $app under Privacy & Security > Accessibility"
 }
 
 # macOS keeps these in cfprefsd, per user. They are environment rather than
@@ -1265,6 +1317,7 @@ setup_workspaces
 install_self
 install_tools
 install_cerebro
+install_ordo
 register_dev_sources
 echo
 wire_shell
