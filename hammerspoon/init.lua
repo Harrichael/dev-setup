@@ -1,7 +1,7 @@
 -- Hammerspoon config for dev-setup.
 --
 -- Wired by reference: ~/.hammerspoon/init.lua dofile()s this, so a pull
--- updates it. Reload with the Hammerspoon menu, or: hs -c 'hs.reload()'
+-- updates it, and the watcher below reloads it.
 --
 -- NOTE: after granting Hammerspoon a new macOS permission you must QUIT AND
 -- RELAUNCH it, not "Reload Config". AXIsProcessTrusted() caches its answer for
@@ -9,6 +9,25 @@
 
 require("hs.ipc")
 hs.ipc.cliInstall()
+
+-- Reload whenever a .lua file beside this one changes, so a `git pull` takes
+-- effect without anyone remembering to reload. ~/.hammerspoon is not watched:
+-- it only holds the dofile() line pointing here.
+--
+-- The timer lets a burst of writes (a pull touching several files, an editor's
+-- save-via-rename) settle into one reload instead of reloading on a half-written
+-- file. The watcher is a global because Hammerspoon garbage-collects a watcher
+-- nothing references, and it would silently stop firing.
+local CONFIG_DIR = debug.getinfo(1, "S").source:match("^@(.*)/[^/]*$")
+local reloadSoon = hs.timer.delayed.new(0.5, hs.reload)
+configWatcher = hs.pathwatcher.new(CONFIG_DIR, function(paths)
+  for _, path in ipairs(paths) do
+    if path:sub(-4) == ".lua" then
+      reloadSoon:start()
+      return
+    end
+  end
+end):start()
 
 --------------------------------------------------------------------------------
 -- Linux-style ctrl bindings for GUI apps
