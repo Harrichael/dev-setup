@@ -131,11 +131,10 @@ re-run with everything installed takes about a second.
 
 | Step | Action |
 | --- | --- |
-| Packages | macOS: `brew bundle`. Linux: prints the list to install yourself. |
+| Packages | macOS: `brew bundle --no-upgrade` (install only; `brew upgrade` is yours). Linux: prints the list to install yourself. |
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, sets a per-workspace git identity, and offers a per-workspace `gh auth login` (each workspace gets its own `.choros-config/gh`). |
-| Tools | Defaults to yes. Clones/updates Choros, LatticeQL, and Gnomon into `~/.local/share/dev-setup/tools/` and installs each. Installs Rust via rustup first if needed. See [Tools](#tools). |
-| Cerebro | Installs `cerebro` with its own `get-cerebro.sh` (built from source) if it is not already in `~/.local/bin`. Install only: updating it is Cerebro's job. |
-| Ordo | macOS only. Installs `~/Applications/Ordo.app` with its own `get-ordo.sh` (built from source and signed, so the Accessibility grant survives updates) if it is missing, and writes a LaunchAgent that runs it engaged at login and restarts it after a crash. Install only: updating it is Ordo's job. Grant Accessibility to `Ordo.app` once, from its menu bar icon. Restart it with `launchctl kickstart -k gui/$UID/dev-setup.com.harrichael.ordo`. |
+| Tools | Defaults to yes. Clones Choros, LatticeQL, Gnomon, Cerebro and (macOS) Ordo into `~/.local/share/dev-setup/tools/` and installs any not yet installed. Installs Rust via rustup first if needed. See [Tools](#tools). |
+| Ordo | macOS only. If the tools step installed `~/Applications/Ordo.app`, writes a LaunchAgent that runs it engaged at login and restarts it after a crash. Grant Accessibility to `Ordo.app` once, from its menu bar icon. Restart it with `launchctl kickstart -k gui/$UID/dev-setup.com.harrichael.ordo`. |
 | kitty | Wires `~/.config/kitty/kitty.conf` to include this repo's shared + per-OS kitty config. |
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
 | hammerspoon | macOS only. Wires `~/.hammerspoon/init.lua` to `dofile` this repo's `hammerspoon/init.lua`. |
@@ -316,7 +315,10 @@ points at a directory that no longer exists. Re-running afterwards reports
 `install.sh` clones and installs a set of tools into
 **`${XDG_DATA_HOME:-~/.local/share}/dev-setup/tools/`**, which dev-setup owns. That directory is the authoritative copy of each tool: it
 is never developed in, only pulled and re-installed from, so every installed
-binary has a provenance you can check. All are repos you own and update; each is
+binary has a provenance you can check. **Install only:** a plain run installs
+what is missing and never touches an installed tool. `./install.sh --update`
+pulls every checkout and reinstalls whatever moved; it is the only way
+dev-setup updates anything. All are repos you own and update; each is
 a plain clone, not a submodule — they're tool dependencies you also develop, and
 pinning them to a dev-setup commit would only add friction.
 
@@ -337,35 +339,27 @@ under `$XDG_STATE_HOME`.
 
 | Tool | Kind | Installed as |
 | --- | --- | --- |
-| [Choros](https://github.com/Harrichael/Choros) | Rust | `cargo install --path` → `~/.cargo/bin/choros` |
-| [LatticeQL](https://github.com/Harrichael/LatticeQL) | Rust | `cargo install --path` → `~/.cargo/bin/lql` |
-| [Gnomon](https://github.com/Harrichael/Gnomon) | Python | delegates to the repo's own `install.sh` |
+| [Choros](https://github.com/Harrichael/Choros) | Rust | its `install.sh` → `~/.local/bin/choros` |
+| [LatticeQL](https://github.com/Harrichael/LatticeQL) | Rust | its `install.sh` → `~/.local/bin/lql` |
+| [Gnomon](https://github.com/Harrichael/Gnomon) | Python | its `install.sh` → `~/.claude/gnomon.py` |
+| [Cerebro](https://github.com/Harrichael/Cerebro) | Rust | its `install.sh` → `~/.local/bin/cerebro` |
+| [Ordo](https://github.com/Harrichael/Ordo) | Rust, macOS only | its `install.sh` → signed `~/Applications/Ordo.app`, linked as `~/.local/bin/ordo` |
 
 `~/.cargo/bin` is already on `PATH` in both shell configs, which is why it's
 preferred over the `~/.local/bin` that some of these installers default to. If
 `cargo` is missing, setup offers to install rustup — which also lands in
 `~/.cargo/bin`.
 
-**Every install is stamped, but only Rust builds are skipped.** `cargo install` re-links on every invocation, and
-these packages don't bump their version between commits, so cargo can neither
-skip reliably nor notice that the code changed. The commit each tool was built
-from is recorded under `${XDG_STATE_HOME:-~/.local/state}/dev-setup/`.
-
-A rebuild is skipped only when the commit matches **and** cargo's own record in
-`~/.cargo/.crates.toml` says the installed binary was built from this checkout.
-Otherwise a binary installed from a stray clone elsewhere would satisfy a
-commit-only check and never converge; it reports `re-installing: current binary
-was not built from this checkout`. A re-run with nothing to do prints
-`already built at <sha>`. A cold build takes minutes.
-
-Script tools (Gnomon) are stamped the same way, but the stamp is only a
-*record* — never a skip condition. Re-running their installer every pass is how
-they update, and in Gnomon's case it's also the smoke gate that stops a broken
-copy going live, so dev-setup always runs it again and just reports movement:
-`deployed 2d5a558 -> 987a119`. A failed installer is not stamped, so the record
-can't claim a deploy that didn't happen. Whether the *deployed artifact* came
-from this checkout is the installer's business, not dev-setup's — Gnomon answers
-it in `~/.claude/gnomon.provenance`.
+**Every install is stamped, and the stamp is the skip.** The commit each tool
+was installed from is recorded under `${XDG_STATE_HOME:-~/.local/state}/dev-setup/`.
+When a checkout is still at its stamped commit the tool is installed, and a re-run
+prints `installed at <sha>` and does nothing. Since only `--update` moves a
+checkout, that is every plain run. After `--update` moves one, its installer runs
+again and reports `deployed 2d5a558 -> 987a119`. A failed installer is not
+stamped, so the record can't claim a deploy that didn't happen, and the next run
+tries again. Whether the *deployed artifact* came from this checkout is the
+installer's business, not dev-setup's — Gnomon answers it in
+`~/.claude/gnomon.provenance`.
 
 **One report for everything.** Every install writes
 `${XDG_STATE_HOME:-~/.local/state}/dev-setup/provenance`, listing dev-setup
@@ -412,9 +406,9 @@ The property that buys is a **smoke gate**: every byte that reaches
 `~/.claude/gnomon.py` rendered a sample payload first, so something executing on
 every keystroke is never live until it has run once. Its installer also writes
 `~/.claude/gnomon.provenance` recording which checkout and commit deployed it. Wiring it by reference instead would be silently reverted the next
-time its installer ran. So dev-setup delegates to it, and because that happens on
-every pass, a pull here is also a redeploy — `git pull` alone is *not* enough for
-Gnomon, unlike everything else in this repo.
+time its installer ran. So dev-setup delegates to it, and a pull in its checkout is
+not live until `./install.sh --update` redeploys it — `git pull` alone is *not*
+enough for Gnomon.
 
 That installer merges into `~/.claude/settings.json` rather than overwriting it,
 and is all-or-nothing: on malformed JSON it deploys nothing, changes nothing, and

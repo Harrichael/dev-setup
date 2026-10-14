@@ -18,9 +18,10 @@ usage() {
   cat <<'USAGE'
 usage: install.sh [--update]
 
-  --update   Fast-forward every checkout to its origin default branch first.
-             Without it, install.sh installs whatever the checkouts are at
-             now, and only clones what is missing.
+  --update   Fast-forward every checkout to its origin default branch and
+             reinstall what moved. This is the only way install.sh updates
+             anything. Without it, it installs only what is missing and leaves
+             installed tools exactly as they are.
 
 To install a specific version, check it out and install without --update:
 
@@ -73,7 +74,9 @@ install_packages() {
       return 1
     fi
     echo "==> brew bundle"
-    brew bundle --file="$REPO_DIR/Brewfile"
+    # Install only. Updating what brew installed is brew's job (`brew upgrade`),
+    # not a side effect of re-running setup.
+    brew bundle --no-upgrade --file="$REPO_DIR/Brewfile"
   else
     echo "==> Linux: dotfiles will still be wired below, but install these"
     echo "    packages yourself:"
@@ -579,10 +582,9 @@ login_agent() {
 	<true/>"
 }
 
-# Install only, like Cerebro: get-ordo.sh builds and signs Ordo.app, and keeping
-# it current is Ordo's job. The stable signature is why it must be that script
-# and not a plain cargo build -- Accessibility is bound to the signature, and an
-# ad-hoc one changes every build, silently voiding the grant.
+# Ordo is installed by the tools step, from its own install.sh, which signs it
+# with a stable identity -- Accessibility is bound to the signature, so a plain
+# cargo build would void the grant on every update. This only starts it.
 #
 # Unlike LinearMouse, Ordo is a daemon, not an app with a window to open, so
 # launchd runs the binary inside the bundle (macOS still charges Accessibility to
@@ -590,19 +592,15 @@ login_agent() {
 # `run` starts it engaged. A copy started by hand wins the lock and this one
 # exits 1, so launchd keeps retrying and takes over when that copy stops --
 # restart with launchctl kickstart -k to avoid the wait.
-install_ordo() {
+wire_ordo() {
   [ "$OS" = macos ] || return 0
   echo "==> ordo"
   local app="$HOME/Applications/Ordo.app"
 
-  if [ -d "$app" ]; then
-    echo "    already installed (updates are Ordo's: re-run get-ordo.sh)"
-  else
-    ensure_rust || { echo "    !! cargo unavailable, ordo skipped"; return 0; }
-    if ! curl -fsSL https://raw.githubusercontent.com/Harrichael/Ordo/main/get-ordo.sh | bash; then
-      echo "    !! get-ordo.sh failed -- nothing was installed"
-      return 0
-    fi
+  # An agent for a missing binary would fail every ThrottleInterval, forever.
+  if [ ! -x "$app/Contents/MacOS/ordo" ]; then
+    echo "    not installed, so not started at login"
+    return 0
   fi
 
   write_launch_agent "dev-setup.com.harrichael.ordo" "	<key>ProgramArguments</key>
@@ -960,7 +958,7 @@ choose_registry() {
 
 # -------------------------------------------------------------------- tools ---
 
-# name|clone-url|kind|binary
+# name|clone-url[|os]. An os entry (macos, linux) limits a tool to that OS.
 # Every tool answers to ./install.sh at its root, and that script owns every
 # deployment decision -- what to build, where the binary goes, how to clean up
 # after a rename. dev-setup used to build the Rust ones itself with `cargo
@@ -969,7 +967,9 @@ choose_registry() {
 # One uniform path is the fix; a smarter dispatch was not.
 TOOLS="Choros|git@github.com:Harrichael/Choros.git
 LatticeQL|git@github.com:Harrichael/LatticeQL.git
-Gnomon|git@github.com:Harrichael/Gnomon.git"
+Gnomon|git@github.com:Harrichael/Gnomon.git
+Cerebro|git@github.com:Harrichael/Cerebro.git
+Ordo|git@github.com:Harrichael/Ordo.git|macos"
 
 # Records the commit each tool was last built from. `cargo install` re-links on
 # every invocation otherwise, and these packages do not bump their version
@@ -1062,10 +1062,25 @@ run_tool_installer() {
     echo "      !! no executable install.sh, skipped"
     return 0
   fi
+
+  # The stamp is the commit last deployed from this checkout. A match means the
+  # tool is installed and this pass has nothing to do: only --update moves a
+  # checkout, so without it an installed tool is never rebuilt. Updating
+  # between those runs is the tool's own business.
+  local stamp head previous=""
+  stamp="$STAMP_DIR/$name.sha"
+  head="$(git -C "$dest" rev-parse HEAD 2>/dev/null || echo unknown)"
+  [ -f "$stamp" ] && previous="$(cat "$stamp")"
+  if [ "$previous" = "$head" ]; then
+    echo "      installed at ${head%"${head#???????}"}"
+    return 0
+  fi
+
   # Its own installer owns the deployment decisions; do not second-guess them.
   # Capture first and print after, so the exit status is the installer's and not
   # sed's -- a failing installer must be surfaced, never swallowed. Gnomon for
-  # instance exits 1 on a malformed ~/.claude/settings.json and deploys nothing.
+  # instance exits 1 on a malformed ~/.claude/settings.json and deploys nothing,
+  # and since a failure is not stamped, the next pass tries again.
   local out status
   out="$( cd "$dest" && ./install.sh 2>&1 )" && status=0 || status=$?
   [ -n "$out" ] && printf '%s\n' "$out" | sed 's/^/      /'
@@ -1074,15 +1089,7 @@ run_tool_installer() {
     return 0
   fi
 
-  # Record what was deployed, the same as a cargo tool. This is a *record*, not
-  # a skip condition: re-running the installer every pass is the update path for
-  # these tools, and for Gnomon it is also the smoke gate that keeps a broken
-  # copy from going live. So stamp it and always run again next time.
-  local stamp head previous=""
-  stamp="$STAMP_DIR/$name.sha"
-  head="$(git -C "$dest" rev-parse HEAD 2>/dev/null || echo unknown)"
-  [ -f "$stamp" ] && previous="$(cat "$stamp")"
-  if [ -n "$previous" ] && [ "$previous" != "$head" ]; then
+  if [ -n "$previous" ]; then
     echo "      deployed ${previous%"${previous#???????}"} -> ${head%"${head#???????}"}"
   fi
   mkdir -p "$STAMP_DIR"
@@ -1103,7 +1110,7 @@ install_tools() {
     echo "    destination from DEV_SETUP_TOOLS_REGISTRY: $base"
   else
     base="$TOOLS_DIR"
-    if interactive && ! ask_yn "    Install/update tools (choros, latticeql, gnomon) in $base?" y; then
+    if interactive && ! ask_yn "    Install missing tools ($(printf '%s\n' "$TOOLS" | cut -d'|' -f1 | paste -sd, - | sed 's/,/, /g')) in $base?" y; then
       echo "    skipped"
       return 0
     fi
@@ -1120,13 +1127,17 @@ install_tools() {
 
   drop_cargo_installed_tools "$base"
 
-  local line name url dest oldifs
+  local line name url only dest oldifs
   oldifs="$IFS"; IFS=$'\n'
   for line in $TOOLS; do
     IFS="$oldifs"
     name="$(printf '%s' "$line" | cut -d'|' -f1)"
     url="$(printf '%s' "$line" | cut -d'|' -f2)"
+    only="$(printf '%s' "$line" | cut -s -d'|' -f3)"
     dest="$base/$name"
+    if [ -n "$only" ] && [ "$only" != "$OS" ]; then
+      IFS=$'\n'; continue
+    fi
 
     echo "    --- $name"
     if ensure_checkout "$url" "$dest"; then
@@ -1136,23 +1147,6 @@ install_tools() {
     IFS=$'\n'
   done
   IFS="$oldifs"
-}
-
-# Install only. Cerebro ships no package, so its own get-cerebro.sh builds it
-# from source; keeping it current is Cerebro's job, not dev-setup's, the same as
-# brew owns updating what the Brewfile installs. So once it is present this step
-# never runs the installer again.
-install_cerebro() {
-  echo "==> cerebro"
-  # A fresh machine has not sourced the new shell rc yet, so ~/.local/bin may
-  # not be on PATH even when cerebro is already sitting there.
-  if command -v cerebro >/dev/null 2>&1 || [ -x "$HOME/.local/bin/cerebro" ]; then
-    echo "    already installed (updates are Cerebro's: re-run get-cerebro.sh)"
-    return 0
-  fi
-  ensure_rust || { echo "    !! cargo unavailable, cerebro skipped"; return 0; }
-  curl -fsSL https://raw.githubusercontent.com/Harrichael/Cerebro/main/get-cerebro.sh | bash \
-    || echo "    !! get-cerebro.sh failed -- nothing was installed"
 }
 
 # A registry copy of a tool may be a deliberate development clone (see
@@ -1316,8 +1310,7 @@ echo
 setup_workspaces
 install_self
 install_tools
-install_cerebro
-install_ordo
+wire_ordo
 register_dev_sources
 echo
 wire_shell
