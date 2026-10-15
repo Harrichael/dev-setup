@@ -76,6 +76,15 @@ vim.g.mapleader = ' '              -- Use space to prefix our custom functions t
 vim.keymap.set('n', 'x', '"_x')    -- Use x key to delete characters without overwriting register
 vim.keymap.set('n', '<leader>l', ':nohl<CR>')   -- Clear search highlights
 
+-- ctrl+arrows move between windows, since kitty takes ctrl+w for close-tab.
+-- The M- left/right maps are not redundant: on macOS, Hammerspoon rewrites
+-- ctrl+left/right to alt in every app, so that is what arrives here.
+for key, dir in pairs({ Left = 'h', Down = 'j', Up = 'k', Right = 'l' }) do
+  vim.keymap.set('n', '<C-' .. key .. '>', '<C-w>' .. dir)
+end
+vim.keymap.set('n', '<M-Left>', '<C-w>h')
+vim.keymap.set('n', '<M-Right>', '<C-w>l')
+
 
 --Treesitter config
 -- Registers the cedar parser and the .cedar filetype. It has to run before
