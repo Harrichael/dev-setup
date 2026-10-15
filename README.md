@@ -474,7 +474,7 @@ Two apps, and neither is a window manager:
 
 | Tool | Job | Binds hotkeys? |
 | --- | --- | --- |
-| Hammerspoon | Linux-style `ctrl` editing keys, browser tab keys, app launcher, move-window-to-monitor, restart-scroll-handler, stop-remote-agent | yes, `hammerspoon/init.lua` |
+| Hammerspoon | Linux-style `ctrl` editing keys, browser tab keys, app launcher, move-window-to-monitor, restart-scroll-handler | yes, `hammerspoon/init.lua` |
 | LinearMouse | per-device scroll direction and per-detent distance | no -- Hammerspoon binds the restart for it |
 
 **What was tried and rejected**, so it does not get re-litigated: AeroSpace
@@ -565,55 +565,6 @@ the binding is for a process that has stopped behaving, and such a process need
 not answer a quit AppleEvent. The pause between the two runs on `hs.timer`, never a
 sleep -- Hammerspoon would be blocking the process that holds the `ctrl` layer's
 event tap, dropping every keystroke typed during the wait.
-
-**`ctrl+cmd+alt+k`** stops Splashtop Streamer's per-user agent, the
-remote-control half of the employer's RMM. It is for the input freeze seen
-twice so far: every click and keystroke stops reaching every app -- menu bar
-and Cmd+Tab included -- while the session-level event taps keep working, and
-WindowServer logs "Sender is prohibited from synthesizing events" by the
-tens of thousands without naming the sender. Splashtop is the one known input
-injector on the machine with no Accessibility grant; that it is the cause is
-unproven, and this chord is the experiment.
-
-It is detected inside the `ctrl` layer's event-tap callback, not bound with
-`hs.hotkey`: a hotkey is delivered through the WindowServer stage that
-stalls, so it would be the one binding guaranteed not to fire when needed.
-The action is `launchctl bootout gui/<uid>/com.splashtop.streamer`, run
-asynchronously with `hs.task`, rather than a kill: the agent's plist says
-`KeepAlive`, so a killed agent would be back at once. The root daemon is left
-alone (it needs a password nobody can type during a freeze), as is the RMM
-agent itself. Each firing goes to `~/Library/Logs/hammerspoon-dev-setup.log`,
-which survives the reboot the freeze ends in: the agent's launchd state and
-Splashtop processes just before the bootout, the result, and the state again
-five seconds later, since the root daemon may bootstrap the agent back. A
-machine without the agent loaded logs a line and does nothing else. To bring
-Splashtop back without logging out:
-
-```sh
-launchctl bootstrap gui/$(id -u) /Library/LaunchAgents/com.splashtop.streamer.plist
-```
-
-**Order during a freeze: Ordo's `ctrl+alt+cmd+d`, then `k`, then `d` again.**
-Ordo's chord records every event tap, the secure-input holder and the
-process list into its log (see its README); `k` stops the suspect, which
-destroys the evidence the first `d` captures, and the second `d` shows what
-changed.
-
-**Naming the sender afterwards.** WindowServer's "Sender is prohibited from
-synthesizing events" line carries no pid, but tccd's `kTCCServicePostEvent`
-checks on WindowServer's behalf do: each check is a few lines sharing a
-`msgID`, one naming the requesting process, one carrying the verdict
-(`authValue`: 2 allowed, 0 denied, 1 no entry). WindowServer's pid changes
-per boot and is part of the `msgID`, so read it first:
-
-```sh
-ws=$(pgrep -x WindowServer)
-/usr/bin/log show --last 12h --style compact \
-  --predicate "process == \"tccd\" && eventMessage CONTAINS \"msgID=$ws.\" && (eventMessage CONTAINS \"kTCCServicePostEvent\" || eventMessage CONTAINS \"AUTHREQ_RESULT\" || eventMessage CONTAINS \"AUTHREQ_ATTRIBUTION\")"
-```
-
-Pair the lines by `msgID`. Run it by hand after the fact, not from any
-daemon: `log show` over hours is slow and heavy.
 
 ### Scrolling and macOS defaults
 
