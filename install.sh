@@ -534,6 +534,21 @@ wire_linearmouse() {
   login_agent com.lujjjh.LinearMouse
 }
 
+# Stats shows CPU and RAM in the menu bar. It also turns on Battery, Disk and
+# Network by default, and these are the only keys that say otherwise: Stats reads
+# `<Module>_state` from its own defaults domain when it starts. A running Stats
+# keeps its modules as they were until it is quit and reopened.
+wire_stats() {
+  [ "$OS" = macos ] || return 0
+  echo "==> stats"
+  set_default eu.exelban.Stats CPU_state bool 1
+  set_default eu.exelban.Stats RAM_state bool 1
+  set_default eu.exelban.Stats Battery_state bool 0
+  set_default eu.exelban.Stats Disk_state bool 0
+  set_default eu.exelban.Stats Network_state bool 0
+  login_agent eu.exelban.Stats
+}
+
 # Start things at login with a LaunchAgent rather than a System Settings login
 # item. A login item can only be added by scripting System Events, which needs an
 # Automation grant; a LaunchAgent is a plain file, so writing it is idempotent.
@@ -1320,6 +1335,7 @@ wire_kitty
 wire_claude
 wire_hammerspoon
 wire_linearmouse
+wire_stats
 wire_gh
 apply_macos_defaults
 echo

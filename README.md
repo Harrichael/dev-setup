@@ -139,6 +139,7 @@ re-run with everything installed takes about a second.
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
 | hammerspoon | macOS only. Wires `~/.hammerspoon/init.lua` to `dofile` this repo's `hammerspoon/init.lua`. |
 | linearmouse | macOS only. Symlinks `~/.config/linearmouse/linearmouse.json` to this repo's copy, moving any regular file aside first. Writes a LaunchAgent so LinearMouse starts at login; it takes effect at the next login. |
+| stats | macOS only. Leaves only CPU and RAM on in Stats' menu bar (Battery, Disk and Network off), and writes a LaunchAgent so it starts at login. Quit and reopen Stats if it was already running. |
 | gh shim | Symlinks `~/.local/bin/gh` to this repo's `gh/gh`, which runs the real `gh` with the account of the workspace you are in. |
 | dev-setup source | Pulls the pristine checkout the dotfiles point at, into `~/.local/share/dev-setup/self`. Runs before wiring so paths are recorded once. |
 | Development clones | Interactive, optional. Clones dev-setup and the tool repos into a workspace registry so a choros can hack on them. Nothing is installed from these. |

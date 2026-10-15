@@ -17,6 +17,8 @@ cask "font-jetbrains-mono-nerd-font"  # kitty/kitty.conf asks for "JetBrainsMono
 
 cask "hammerspoon"  # Lua keybinding/automation layer
 cask "linearmouse"  # per-device scroll: see the scrolling note below
+cask "stats"        # CPU and RAM in the menu bar; install.sh's wire_stats
+                    # turns off its other modules
 
 # No window manager cask on purpose: the requirement is one workspace spanning
 # every monitor with most-recently-used switching scoped to it, and nothing
