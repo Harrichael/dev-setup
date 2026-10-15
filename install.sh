@@ -654,7 +654,13 @@ set_default() {
     printf '    ok   %s = %s\n' "$label" "$want"
     return 0
   fi
-  defaults write "$domain" "$key" "-$type" "$want"
+  # `defaults read` reports a bool as 1/0, but `defaults write -bool` refuses
+  # 1/0 and accepts only true/false.
+  local write="$want"
+  if [ "$type" = bool ]; then
+    if [ "$want" = 1 ]; then write=true; else write=false; fi
+  fi
+  defaults write "$domain" "$key" "-$type" "$write"
   printf '    set  %s = %s (was %s)\n' "$label" "$want" "${have:-unset}"
   macos_defaults_changed=1
 }
