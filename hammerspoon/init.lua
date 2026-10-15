@@ -139,6 +139,90 @@ local BROWSER_ALT = {
   p     = { mods = { "cmd", "shift" }, key = "a" },
 }
 
+--------------------------------------------------------------------------------
+-- Kill switch for the remote-control agent during an input freeze
+--------------------------------------------------------------------------------
+-- Stops Splashtop Streamer's per-user agent, the suspected input injector
+-- behind the freeze the README describes. Only the per-user agent: the root
+-- daemon needs a password nobody can type during a freeze, and the RMM agent
+-- is not an injector.
+--
+-- Detected inside keyLayer's event-tap callback, NOT with hs.hotkey.bind. A
+-- hotkey is delivered through the same WindowServer stage that stalls, so it
+-- would be the one binding guaranteed not to fire when it is needed.
+--
+-- `launchctl bootout` rather than a kill: the agent's plist has
+-- KeepAlive/SuccessfulExit=false, so launchd would relaunch a killed agent at
+-- once. Booted out, it stays down until the next login, or until
+--   launchctl bootstrap gui/$(id -u) /Library/LaunchAgents/com.splashtop.streamer.plist
+--
+-- A machine without the agent loaded gets a log line and nothing else: this
+-- file is shared across machines. The log is a file, not the Hammerspoon
+-- console, because the freeze ends in a reboot.
+local REMOTE_AGENT = "com.splashtop.streamer"
+local KILL_LOG = os.getenv("HOME") .. "/Library/Logs/hammerspoon-dev-setup.log"
+
+local function killLog(line)
+  local f = io.open(KILL_LOG, "a")
+  if not f then return end
+  f:write(os.date("%Y-%m-%dT%H:%M:%S%z"), " ", line, "\n")
+  f:close()
+end
+
+-- What launchd and the process table say about the agent, on one line.
+local AGENT_STATE = 'launchctl print "gui/$(id -u)/' .. REMOTE_AGENT .. '" 2>/dev/null'
+  .. " | grep -E 'state =|pid =|last exit' | tr -s '\\t\\n' ' '"
+local AGENT_PROCESSES = "pgrep -fl 'Splashtop|SRStreamer' | tr '\\n' ';'"
+
+-- One shell so the state read, the loaded-check and the bootout are a single
+-- async task; the tap callback only launches it. The exit code tells the
+-- three outcomes apart, and what the agent looked like just before goes to
+-- stdout, so the log line carries it.
+local STOP_REMOTE_AGENT = table.concat({
+  'state=$(' .. AGENT_STATE .. ')',
+  '[ -n "$state" ] || exit 3',
+  'echo "before: $state procs: $(' .. AGENT_PROCESSES .. ')"',
+  'launchctl bootout "gui/$(id -u)/' .. REMOTE_AGENT .. '"',
+}, "; ")
+
+-- The root daemon may bootstrap the agent back itself; whether it did is
+-- the thing worth knowing a few seconds later.
+local AGENT_AFTER = 'state=$(' .. AGENT_STATE .. ')'
+  .. '; echo "after: ${state:-not loaded} procs: $(' .. AGENT_PROCESSES .. ')"'
+
+local function oneLine(s)
+  return (s:gsub("%s+$", ""):gsub("\n", " / "))
+end
+
+local function stopRemoteAgent()
+  killLog("fired: stopping " .. REMOTE_AGENT)
+  hs.task.new("/bin/sh", function(code, out, err)
+    local result = ("exit %d%s%s"):format(code,
+      #out > 0 and (" " .. oneLine(out)) or "",
+      #err > 0 and (" err=" .. oneLine(err)) or "")
+    if code == 0 then
+      killLog("stopped " .. REMOTE_AGENT .. " (" .. result .. ")")
+      hs.alert.show("stopped " .. REMOTE_AGENT)
+      hs.timer.doAfter(5, function()
+        hs.task.new("/bin/sh", function(_, out2, _)
+          killLog(REMOTE_AGENT .. " 5 s later: " .. oneLine(out2))
+        end, { "-c", AGENT_AFTER }):start()
+      end)
+    elseif code == 3 then
+      killLog(REMOTE_AGENT .. " not loaded; nothing done")
+    else
+      killLog("bootout of " .. REMOTE_AGENT .. " failed (" .. result .. ")")
+      hs.alert.show("could not stop " .. REMOTE_AGENT .. ": " .. result)
+    end
+  end, { "-c", STOP_REMOTE_AGENT }):start()
+end
+
+-- Chords on ctrl+alt+cmd that must work while hs.hotkey cannot, keyed by
+-- keycode for keyLayer's hot path. Swallowed, so nothing downstream sees them.
+local PANIC_CHORDS = {
+  [hs.keycodes.map.k] = stopRemoteAgent,
+}
+
 -- Keyed by keycode so the hot path does no string work.
 local function byKeycode(rules)
   local out = {}
@@ -161,6 +245,16 @@ local BROWSER_ALT_RULES  = byKeycode(BROWSER_ALT)
 -- cannot, because the replacement no longer carries the modifier we match on.
 keyLayer = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(e)
   local f = e:getFlags()
+  -- The panic chords first: the rest of this callback is about keys that
+  -- reach an app, and these must act even when none do.
+  if f.ctrl and f.alt and f.cmd then
+    local action = PANIC_CHORDS[e:getKeyCode()]
+    if action then
+      action()
+      return true
+    end
+    return false
+  end
   -- ctrl+cmd, ctrl+alt and the like belong to other owners, macOS itself and
   -- kitty's config-reload among them.
   if f.cmd or (f.ctrl and f.alt) then return false end
