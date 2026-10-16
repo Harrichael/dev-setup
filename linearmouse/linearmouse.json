@@ -9,7 +9,11 @@
       },
       "scrolling": {
         "distance": "70px",
-        "reverse": true
+        "reverse": true,
+        "smoothed": {
+          "preset": "linear",
+          "bouncing": false
+        }
       }
     },
     {
