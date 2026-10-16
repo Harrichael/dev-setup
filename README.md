@@ -578,7 +578,6 @@ import would also carry window positions and update timestamps.
 | `com.apple.swipescrolldirection` | `1` | natural scrolling, for the trackpad |
 | LinearMouse `scrolling.reverse` | `true` | flips the **wheel** back to traditional |
 | LinearMouse `scrolling.distance` | `70px` | how far one detent travels — the pace knob |
-| LinearMouse `scrolling.smoothed` | `linear`, no bounce | each detent glides as many small events instead of one jump, at constant speed |
 | `com.apple.mouse.scaling` | `1.5` | pointer speed |
 | `com.apple.dock mru-spaces` | `0` | stop Spaces reordering themselves |
 
