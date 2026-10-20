@@ -157,7 +157,7 @@ re-run with everything installed takes about a second.
 | --- | --- |
 | Packages | macOS: `brew bundle --no-upgrade` (install only; `brew upgrade` is yours). Linux: prints the list to install yourself. |
 | Choros workspaces | Interactive, defaults to yes. Creates choros roots, re-clones pre-existing repos into the registry, sets a per-workspace git identity, and offers a per-workspace `gh auth login` (each workspace gets its own `.choros-config/gh`). |
-| Tools | Defaults to yes. Clones Choros, LatticeQL, Gnomon, Cerebro and (macOS) Ordo into `~/.local/share/dev-setup/tools/` and installs any not yet installed. Installs Rust via rustup first if needed. See [Tools](#tools). |
+| Tools | Defaults to yes. Clones Choros, LatticeQL, Gnomon, Cerebro, Ergon and (macOS) Ordo into `~/.local/share/dev-setup/tools/` and installs any not yet installed. Installs Rust via rustup first if needed. See [Tools](#tools). |
 | Ordo | macOS only. If the tools step installed `~/Applications/Ordo.app`, writes a LaunchAgent that runs it engaged at login and restarts it after a crash. Grant Accessibility to `Ordo.app` once, from its menu bar icon. Restart it with `launchctl kickstart -k gui/$UID/dev-setup.com.harrichael.ordo`. |
 | kitty | Wires `~/.config/kitty/kitty.conf` to include this repo's shared + per-OS kitty config. |
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
@@ -368,6 +368,7 @@ under `$XDG_STATE_HOME`.
 | [LatticeQL](https://github.com/Harrichael/LatticeQL) | Rust | its `install.sh` → `~/.local/bin/lql` |
 | [Gnomon](https://github.com/Harrichael/Gnomon) | Python | its `install.sh` → `~/.claude/gnomon.py` |
 | [Cerebro](https://github.com/Harrichael/Cerebro) | Rust | its `install.sh` → `~/.local/bin/cerebro` |
+| [Ergon](https://github.com/Harrichael/Ergon) | Rust | its `install.sh` → `~/.local/bin/ergon` |
 | [Ordo](https://github.com/Harrichael/Ordo) | Rust, macOS only | its `install.sh` → signed `~/Applications/Ordo.app`, linked as `~/.local/bin/ordo` |
 
 `~/.cargo/bin` is already on `PATH` in both shell configs, which is why it's

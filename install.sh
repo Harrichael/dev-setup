@@ -1026,6 +1026,7 @@ TOOLS="Choros|git@github.com:Harrichael/Choros.git
 LatticeQL|git@github.com:Harrichael/LatticeQL.git
 Gnomon|git@github.com:Harrichael/Gnomon.git
 Cerebro|git@github.com:Harrichael/Cerebro.git
+Ergon|git@github.com:Harrichael/Ergon.git
 Ordo|git@github.com:Harrichael/Ordo.git|macos"
 
 # Records the commit each tool was last built from. `cargo install` re-links on
