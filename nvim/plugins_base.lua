@@ -165,6 +165,23 @@ require('packer').startup(function(use)
     end
   }
 
+  -- Ergon tasks as a buffer: `:Ergon` opens the project named by the nearest
+  -- .ergon file, one task per line. Indent to nest, edit the [ ] box for
+  -- status, `:w` to review and apply. <CR> on a task opens its full intent.
+  -- Loaded from the checkout install.sh keeps for the ergon binary, so the
+  -- plugin and the CLI it drives update together with `install.sh --update`.
+  -- Points at the nvim/ subdirectory itself rather than using `rtp = 'nvim'`:
+  -- packer adds an rtp subdirectory only after startup has sourced plugin/,
+  -- so plugin/ergon.lua never ran and :Ergon was never defined.
+  use {
+    '~/.local/share/dev-setup/tools/Ergon/nvim',
+    as = 'ergon.nvim',
+    config = function()
+      require('ergon').setup()
+      vim.keymap.set('n', '<leader>eo', '<cmd>Ergon<cr>', { desc = 'ergon: open tasks' })
+    end,
+  }
+
   -- Syntax highlighting
   --use { 'm-demare/hlargs.nvim' }
   --require('hlargs').setup()
