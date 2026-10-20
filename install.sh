@@ -78,12 +78,48 @@ install_packages() {
     # not a side effect of re-running setup.
     brew bundle --no-upgrade --file="$REPO_DIR/Brewfile"
   else
+    # Printed, not run: these need sudo or pick a release, and a setup script
+    # that silently installs system packages is not one you can re-run blind.
+    #
+    # neovim and kitty are deliberately NOT from apt. Distro builds lag far
+    # behind what this config needs (Ubuntu 22.04 ships nvim 0.7 and kitty
+    # 0.21, and the neovim PPA is no newer), so both go into ~/.local, which
+    # bashrc puts ahead of /usr/bin.
+    local arch
+    arch="$(uname -m)"; [ "$arch" = aarch64 ] && arch=arm64
     echo "==> Linux: dotfiles will still be wired below, but install these"
     echo "    packages yourself:"
-    echo "    sudo apt install neovim git tree ripgrep kitty fonts-jetbrains-mono"
-    echo "    git-delta: https://github.com/dandavison/delta/releases"
+    echo "    apt:       sudo apt install git tree ripgrep build-essential"
+    echo "    neovim:    curl -fL https://github.com/neovim/neovim/releases/latest/download/nvim-linux-$arch.tar.gz \\"
+    echo "                 | tar -xz -C ~/.local --strip-components=1"
+    echo "    kitty:     curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n"
+    echo "               ln -sf ~/.local/kitty.app/bin/kitty ~/.local/kitty.app/bin/kitten ~/.local/bin/"
+    echo "    font:      mkdir -p ~/.local/share/fonts/JetBrainsMono && curl -fL \\"
+    echo "                 https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz \\"
+    echo "                 | tar -xJ -C ~/.local/share/fonts/JetBrainsMono && fc-cache -f"
+    echo "    git-delta: .deb from https://github.com/dandavison/delta/releases"
     echo "    fnm:       curl -fsSL https://fnm.vercel.app/install | bash"
     echo "    gh:        https://github.com/cli/cli/blob/trunk/docs/install_linux.md"
+  fi
+  check_versions
+}
+
+# The config fails in confusing ways on an old build -- nvim reports startup
+# errors from treesitter, kitty rejects options it has never heard of -- so name
+# the real cause up front. Only checks what is installed; absence is reported
+# by the steps that need it.
+# nvim: the treesitter master pin and vim.treesitter.query.set need 0.10.
+# kitty: cursor_trail needs 0.37.
+check_versions() {
+  _check_min nvim 0.10.0 "$(nvim --version 2>/dev/null | sed -n '1s/^NVIM v\([0-9.]*\).*/\1/p')"
+  _check_min kitty 0.37.0 "$(kitty --version 2>/dev/null | sed -n 's/^kitty \([0-9.]*\).*/\1/p')"
+}
+
+# _check_min <name> <minimum> <installed-version-or-empty>
+_check_min() {
+  [ -n "$3" ] || return 0
+  if [ "$(printf '%s\n%s\n' "$2" "$3" | sort -V | head -1)" != "$2" ]; then
+    echo "    !! $1 $3 is too old for this config (need >= $2): $(command -v "$1")"
   fi
 }
 
@@ -1218,7 +1254,7 @@ register_dev_sources() {
 
   mkdir -p "$reg"
 
-  local self_url line name url oldifs
+  local self_url line name url only oldifs
   self_url="$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || echo "")"
 
   if [ -n "$self_url" ]; then
@@ -1233,6 +1269,11 @@ register_dev_sources() {
     IFS="$oldifs"
     name="$(printf '%s' "$line" | cut -d'|' -f1)"
     url="$(printf '%s' "$line" | cut -d'|' -f2)"
+    only="$(printf '%s' "$line" | cut -s -d'|' -f3)"
+    # A clone of a tool this OS cannot run is nothing to develop on here.
+    if [ -n "$only" ] && [ "$only" != "$OS" ]; then
+      IFS=$'\n'; continue
+    fi
     echo "    --- $name"
     choros_add "$reg" "$url"
     IFS=$'\n'

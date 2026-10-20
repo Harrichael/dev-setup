@@ -73,22 +73,46 @@ Shell config is `bashrc`.
 install them for you:
 
 ```
-sudo apt install neovim git tree ripgrep kitty fonts-jetbrains-mono
+sudo apt install git tree ripgrep build-essential
 
-# git-delta: https://github.com/dandavison/delta/releases
+# neovim >= 0.10, into ~/.local
+curl -fL https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz \
+  | tar -xz -C ~/.local --strip-components=1
+
+# kitty >= 0.37, into ~/.local/kitty.app
+curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
+ln -sf ~/.local/kitty.app/bin/kitty ~/.local/kitty.app/bin/kitten ~/.local/bin/
+
+# JetBrainsMono Nerd Font
+mkdir -p ~/.local/share/fonts/JetBrainsMono
+curl -fL https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz \
+  | tar -xJ -C ~/.local/share/fonts/JetBrainsMono && fc-cache -f
+
+# git-delta: .deb from https://github.com/dandavison/delta/releases
 # fnm:
 curl -fsSL https://fnm.vercel.app/install | bash
 ```
 
-If `nvim` is too old, see [troubleshooting.md](troubleshooting.md) — some distros
-don't package a current build.
+**Don't take neovim or kitty from apt.** Distro builds lag well behind: Ubuntu
+22.04 ships nvim 0.7 and kitty 0.21, and the neovim PPA is no newer. This config
+needs nvim 0.10 (the treesitter `master` pin and `vim.treesitter.query.set`) and
+kitty 0.37 (`cursor_trail`). `install.sh` warns when either installed build is
+older than that. `~/.local/bin` is ahead of `/usr/bin` on `PATH`, so an old apt
+build left installed is shadowed rather than in the way.
 
-`fonts-jetbrains-mono` is the plain font, **not** the Nerd Font patch that
-`kitty/kitty.conf` asks for by the family name `JetBrainsMono NFM`. Either grab
-the patched build from
-[nerd-fonts releases](https://github.com/ryanoasis/nerd-fonts/releases) into
-`~/.local/share/fonts` and run `fc-cache -f`, or change `font_family` to
-`JetBrains Mono` and lose the glyphs.
+The font has to be the Nerd Font patch, because `kitty/kitty.conf` asks for it by
+the family name `JetBrainsMono NFM`. apt's `fonts-jetbrains-mono` is the plain
+font. If you use it instead, change `font_family` to `JetBrains Mono` and lose
+the glyphs.
+
+**Upgrading a machine wired by hand.** Remove any `source .../bashrc`, gitconfig
+`[include]` or nvim `require` lines that point at a clone from before the
+sentinel blocks existed. `install.sh` only notices hand-wired lines that name
+the path it is about to wire, so it can't see these and would add a second
+block, sourcing both. Delete packer's plugins too
+(`~/.local/share/nvim/site/pack/packer/start/*` and
+`~/.config/nvim/plugin/packer_compiled.lua`). Packer won't re-clone a plugin
+whose remote has moved, and leap.nvim's has.
 
 **2. Add an ssh key to your GitHub account**
 ([guide](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)),
