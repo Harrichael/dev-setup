@@ -97,7 +97,10 @@ install_packages() {
     echo "    font:      mkdir -p ~/.local/share/fonts/JetBrainsMono && curl -fL \\"
     echo "                 https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz \\"
     echo "                 | tar -xJ -C ~/.local/share/fonts/JetBrainsMono && fc-cache -f"
-    echo "    git-delta: .deb from https://github.com/dandavison/delta/releases"
+    echo "    git-delta: v=\$(curl -fsSL https://api.github.com/repos/dandavison/delta/releases/latest \\"
+    echo "                 | sed -n 's/.*\"tag_name\": *\"\\([^\"]*\\)\".*/\\1/p')"
+    echo "               curl -fL \"https://github.com/dandavison/delta/releases/download/\$v/delta-\$v-\$(uname -m)-unknown-linux-gnu.tar.gz\" \\"
+    echo "                 | tar -xz -C ~/.local/bin --strip-components=1 --wildcards '*/delta'"
     echo "    fnm:       curl -fsSL https://fnm.vercel.app/install | bash"
     echo "    gh:        https://github.com/cli/cli/blob/trunk/docs/install_linux.md"
   fi

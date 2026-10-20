@@ -88,7 +88,12 @@ mkdir -p ~/.local/share/fonts/JetBrainsMono
 curl -fL https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz \
   | tar -xJ -C ~/.local/share/fonts/JetBrainsMono && fc-cache -f
 
-# git-delta: .deb from https://github.com/dandavison/delta/releases
+# git-delta (release assets are versioned, so look up the latest tag first)
+v=$(curl -fsSL https://api.github.com/repos/dandavison/delta/releases/latest \
+  | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p')
+curl -fL "https://github.com/dandavison/delta/releases/download/$v/delta-$v-$(uname -m)-unknown-linux-gnu.tar.gz" \
+  | tar -xz -C ~/.local/bin --strip-components=1 --wildcards '*/delta'
+
 # fnm:
 curl -fsSL https://fnm.vercel.app/install | bash
 ```
