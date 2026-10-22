@@ -128,6 +128,14 @@ export PATH="$HOME/go/bin:$PATH"
 # shadows it rather than the other way round.
 export PATH="$HOME/.local/bin:$PATH"
 
+# On macOS, Claude Code re-execs itself through ~/.local/share/claude/ClaudeCode.app
+# to disclaim TCC responsibility, but that executable is a hardlink to
+# versions/<ver>, and TCC files the grant under the versioned path. Every update
+# then re-asks for Accessibility, Microphone, etc. This is the flag its own
+# relaunch sets; set up front it skips the relaunch, so the terminal (kitty)
+# stays the responsible app and its grants cover Claude.
+export CLAUDE_BG_TCC_DISCLAIMED=1
+
 # Add an "alert" function for long running commands.  Use like so:
 #   sleep 10; alert
 # The notification text is passed through argv rather than interpolated into
