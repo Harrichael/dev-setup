@@ -10,6 +10,8 @@ brew "fnm"       # node version manager, wired up in bashrc/zshrc
 brew "tree"      # required by the `gtree` alias
 brew "ripgrep"
 brew "gh"        # wrapped by gh/gh, which picks the account per workspace
+brew "sccache"   # choros wires it into each new workspace's .cargo/config.toml,
+                 # so fresh clones share compiled dependencies
 
 cask "kitty"                          # terminal; draws its own tab bar, so a
                                       # tiling WM sees one window, not one per tab

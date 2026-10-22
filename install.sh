@@ -103,6 +103,7 @@ install_packages() {
     echo "                 | tar -xz -C ~/.local/bin --strip-components=1 --wildcards '*/delta'"
     echo "    fnm:       curl -fsSL https://fnm.vercel.app/install | bash"
     echo "    gh:        https://github.com/cli/cli/blob/trunk/docs/install_linux.md"
+    echo "    sccache:   cargo install --locked sccache"
   fi
   check_versions
 }
