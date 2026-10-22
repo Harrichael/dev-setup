@@ -5,7 +5,7 @@ if [[ -z "${BASE_PATH}" ]]; then
 fi
 
 
-PS1='[\D{%T}] ${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]$(__git_ps1 " (git:%s)")\n\[\033[01;34m\]\w\[\033[00m\]\n\$ '
+PS1='[\D{%T}] ${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]$(__git_ps1 " (git:%s)")$(type __choros_ps1 >/dev/null 2>&1 && __choros_ps1)\n\[\033[01;34m\]\w\[\033[00m\]\n\$ '
 
 
 # don't put duplicate lines or lines starting with space in the history.
@@ -155,6 +155,13 @@ fi
 
 if command -v choros >/dev/null 2>&1; then
   eval "$(choros shell-init)"
+  # ⇣sync / !resolve for this workspace's landing queues; files only, so cheap.
+  __choros_ps1() {
+    local t; t="$(command choros status --prompt 2>/dev/null)"
+    # Uncoloured: escapes printed from inside $(...) can't be wrapped in \[ \],
+    # and unwrapped ones throw off readline's idea of the prompt width.
+    [ -n "$t" ] && printf ' %s' "$t"
+  }
 fi
 
 # --- Line editing -----------------------------------------------------------

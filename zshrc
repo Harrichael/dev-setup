@@ -14,7 +14,7 @@ zstyle ':vcs_info:git:*' actionformats ' (git:%b|%a)'
 precmd_functions+=(vcs_info)
 setopt PROMPT_SUBST
 
-PROMPT='[%D{%T}] %F{green}%n@%m%f${vcs_info_msg_0_}
+PROMPT='[%D{%T}] %F{green}%n@%m%f${vcs_info_msg_0_}${__choros_tok}
 %F{blue}%~%f
 %# '
 
@@ -166,6 +166,14 @@ fi
 
 if command -v choros >/dev/null 2>&1; then
   eval "$(choros shell-init)"
+  # ⇣sync when a landing queue moved under this workspace, !resolve when one
+  # is parked on a conflict. choros reads files only for this, so it is cheap
+  # enough to run before every prompt.
+  __choros_prompt() {
+    local t; t="$(command choros status --prompt 2>/dev/null)"
+    __choros_tok="${t:+ %F{yellow}$t%f}"
+  }
+  precmd_functions+=(__choros_prompt)
 fi
 
 # --- Line editing -----------------------------------------------------------

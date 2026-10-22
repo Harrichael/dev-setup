@@ -679,6 +679,39 @@ wire_ordo() {
   echo "    manual, once: add $app under Privacy & Security > Accessibility"
 }
 
+# chorosd re-syncs Choros landing queues: it notices merged PRs, moves what was
+# queued behind them, and opens the next PRs. Choros's install.sh (tools step)
+# puts it on PATH; this only keeps it running. It shells out to git and gh,
+# which launchd's bare PATH would not find.
+wire_chorosd() {
+  [ "$OS" = macos ] || return 0
+  echo "==> chorosd"
+  local bin="$HOME/.local/bin/chorosd"
+  if [ ! -x "$bin" ]; then
+    echo "    not installed, so not started at login"
+    return 0
+  fi
+  write_launch_agent "dev-setup.com.harrichael.chorosd" "	<key>ProgramArguments</key>
+	<array>
+		<string>$bin</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>30</integer>
+	<key>StandardOutPath</key>
+	<string>$HOME/Library/Logs/chorosd.log</string>
+	<key>StandardErrorPath</key>
+	<string>$HOME/Library/Logs/chorosd.log</string>"
+}
+
 # macOS keeps these in cfprefsd, per user. They are environment rather than
 # config: there is no file to wire, no block to remove, and no way to express
 # them as a dotfile. So dev-setup writes them, and writes ONLY the keys it holds
@@ -1378,6 +1411,7 @@ setup_workspaces
 install_self
 install_tools
 wire_ordo
+wire_chorosd
 register_dev_sources
 echo
 wire_shell
