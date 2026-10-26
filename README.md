@@ -166,6 +166,7 @@ re-run with everything installed takes about a second.
 | Ordo | macOS only. If the tools step installed `~/Applications/Ordo.app`, writes a LaunchAgent that runs it engaged at login and restarts it after a crash. Grant Accessibility to `Ordo.app` once, from its menu bar icon. Restart it with `launchctl kickstart -k gui/$UID/dev-setup.com.harrichael.ordo`. |
 | kitty | Wires `~/.config/kitty/kitty.conf` to include this repo's shared + per-OS kitty config. |
 | Claude global | Wires `~/.claude/CLAUDE.md` to import `claude/CLAUDE.md` from this repo. |
+| Claude settings | Sets the keys in `claude/settings.json` (idle compaction off) in `~/.claude/settings.json`, leaving its other keys alone. |
 | hammerspoon | macOS only. Wires `~/.hammerspoon/init.lua` to `dofile` this repo's `hammerspoon/init.lua`. |
 | linearmouse | macOS only. Symlinks `~/.config/linearmouse/linearmouse.json` to this repo's copy, moving any regular file aside first. Writes a LaunchAgent so LinearMouse starts at login; it takes effect at the next login. |
 | stats | macOS only. Leaves only CPU and RAM on in Stats' menu bar (Battery, Disk and Network off), and writes a LaunchAgent so it starts at login. Quit and reopen Stats if it was already running. |

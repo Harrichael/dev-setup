@@ -789,6 +789,35 @@ wire_claude() {
              "$WIRE_DIR/claude/CLAUDE.md" "dev-setup" "-->"
 }
 
+# settings.json is JSON, which can't import another file, so it can't be wired
+# by reference. Instead the keys in claude/settings.json are set in it and every
+# other key is left alone: Claude Code's /config and Gnomon's installer write
+# there too.
+wire_claude_settings() {
+  echo "==> claude settings"
+  mkdir -p "$HOME/.claude"
+  python3 - "$WIRE_DIR/claude/settings.json" "$HOME/.claude/settings.json" <<'PY'
+import json, os, sys
+src, dst = sys.argv[1], sys.argv[2]
+want = json.load(open(src))
+try:
+    have = json.load(open(dst)) if os.path.exists(dst) else {}
+except ValueError as e:
+    print(f"    !! {dst} is not valid JSON ({e}); left alone")
+    sys.exit(0)
+changed = [k for k, v in want.items() if have.get(k) != v]
+if not changed:
+    print(f"    already current: {dst}")
+    sys.exit(0)
+have.update(want)
+with open(dst + ".tmp", "w") as f:
+    json.dump(have, f, indent=2)
+    f.write("\n")
+os.replace(dst + ".tmp", dst)
+print(f"    set {', '.join(changed)}: {dst}")
+PY
+}
+
 # ---------------------------------------------------------------- workspaces ---
 
 # A choros project root is any dir containing .choros-config/registry.
@@ -1419,6 +1448,7 @@ wire_gitconfig
 wire_nvim
 wire_kitty
 wire_claude
+wire_claude_settings
 wire_hammerspoon
 wire_linearmouse
 wire_stats
