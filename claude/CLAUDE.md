@@ -100,6 +100,9 @@
 
 ## Comments
 
+- Comments are not the place to capture historic back and forth. Sometimes the
+  right call is not add and add more to a comment, but to go back and reframe
+  and even delete comments. Comments about history should be very rare.
 - The bar for adding a comment: large ambiguity, or a design choice that
   would surprise the reader. This is important and all further guidance should
   be read in light of this.
@@ -112,9 +115,6 @@
 - Do narrate footguns, but don't be pedantic.
 - Be careful not to follow the apparent comment standards of a file by a matter
   of precedent. These instructions supersede precedent.
-- Comments are not the place to capture historic back and forth. Sometimes the
-  right call is not add and add more to a comment, but to go back and reframe
-  and even delete comments. Comments about history should be very rare.
 - For published or broadly shared libraries, consider a file-level extended
   comment explaining how to use the module, with an example.
     - In examples, illustrate the API generically. Concrete, evocative names
@@ -128,3 +128,22 @@
   permission.
 - If asked to resolve git merge, investigate the intention of both branches and
   resolve the files, but do not git add or merge.
+- If you, however, move files, please use `git mv` for history purposes.
+
+## Agent Messaging
+
+- Be careful not to invent requirements the user did not say. This applies to
+  code comments, documentation, AND to messaging other agents and your
+  sub-agents.
+- When messaging other agents, quote the user directly when possible. This
+  should be the core of the message.
+- That message core can be accompanied with "context" and "direction" headings.
+  The context heading can give some objective fact information that will help
+  orient. Such as "go here and there to find X". The direction heading is
+  anything extra that you would normally deem worthy to send, but should be
+  caveated as your own on-the-fly judgement, and it should always accompany a
+  short justification or why you believed such. This will help the other agent
+  to contextualize the guidance and nuance it or ignore it as appropriate.
+- Make sure that subagents have important items in this document quote to them
+  in another section as well. If they are a planning agent, it should get the
+  architecture guidance here, as an example.
