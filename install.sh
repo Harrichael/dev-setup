@@ -101,7 +101,7 @@ install_packages() {
     echo "                 | sed -n 's/.*\"tag_name\": *\"\\([^\"]*\\)\".*/\\1/p')"
     echo "               curl -fL \"https://github.com/dandavison/delta/releases/download/\$v/delta-\$v-\$(uname -m)-unknown-linux-gnu.tar.gz\" \\"
     echo "                 | tar -xz -C ~/.local/bin --strip-components=1 --wildcards '*/delta'"
-    echo "    fnm:       curl -fsSL https://fnm.vercel.app/install | bash"
+    echo "    mise:      curl -fsSL https://mise.run | sh"
     echo "    gh:        https://github.com/cli/cli/blob/trunk/docs/install_linux.md"
     echo "    sccache:   cargo install --locked sccache"
   fi
@@ -225,19 +225,35 @@ require(\"init_base\")" "$WIRE_DIR/nvim"
 
 setup_node() {
   echo "==> node"
-  if ! command -v fnm >/dev/null 2>&1; then
-    echo "    skipped: fnm not on PATH"
+  if ! command -v mise >/dev/null 2>&1; then
+    echo "    skipped: mise not on PATH"
     return 0
   fi
-  # fnm deliberately ships no Node of its own, so node/npx -- and the nx
-  # aliases that shell out to npx -- stay broken until a version exists.
-  if fnm list 2>/dev/null | grep -qE 'v[0-9]+\.'; then
-    echo "    already installed: $(fnm list 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | tr '\n' ' ')"
+  # conf.d rather than config.toml, which stays free for `mise use -g`.
+  local src="$WIRE_DIR/mise/config.toml"
+  local dst="$HOME/.config/mise/conf.d/dev-setup.toml"
+  # A dangling link here takes the .nvmrc setting with it, and then every
+  # node/pnpm shim fails, pinned repo or not.
+  if [ ! -f "$src" ]; then
+    echo "    skipped: $src not in this checkout yet (--update pulls it)"
     return 0
   fi
-  fnm install --lts
-  fnm default lts-latest
-  echo "    installed $(fnm list 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | tr '\n' ' ')"
+  mkdir -p "$(dirname "$dst")"
+  if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
+    echo "    already current: $dst"
+  else
+    if [ -e "$dst" ] && [ ! -L "$dst" ]; then
+      local backup="$dst.pre-dev-setup.$(date +%Y%m%d%H%M%S)"
+      mv "$dst" "$backup"
+      echo "    moved existing config aside: $backup"
+    fi
+    ln -sfn "$src" "$dst"
+    echo "    wired: $dst -> $src"
+  fi
+  # A project's pinned Node installs itself on first use, but the global
+  # default is what runs everywhere else, so have it ready now. From $HOME so
+  # no project's version file decides what "global" means.
+  (cd "$HOME" && mise install --quiet) && echo "    installed: $(cd "$HOME" && mise ls --current --no-header 2>/dev/null | awk '{print $1"@"$2}' | tr '\n' ' ')"
 }
 
 # ------------------------------------------------------------ nvim plugins ---

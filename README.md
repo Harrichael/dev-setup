@@ -31,7 +31,7 @@ echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
 eval "$(/opt/homebrew/bin/brew shellenv)"
 ```
 
-Don't skip this. `zshrc` finds nvim, fnm, and delta through brew's `PATH`, and
+Don't skip this. `zshrc` finds nvim, mise, and delta through brew's `PATH`, and
 if brew is missing they are skipped *silently* rather than erroring.
 
 **3. Add an ssh key to your GitHub account**
@@ -94,8 +94,8 @@ v=$(curl -fsSL https://api.github.com/repos/dandavison/delta/releases/latest \
 curl -fL "https://github.com/dandavison/delta/releases/download/$v/delta-$v-$(uname -m)-unknown-linux-gnu.tar.gz" \
   | tar -xz -C ~/.local/bin --strip-components=1 --wildcards '*/delta'
 
-# fnm:
-curl -fsSL https://fnm.vercel.app/install | bash
+# mise:
+curl -fsSL https://mise.run | sh
 ```
 
 **Don't take neovim or kitty from apt.** Distro builds lag well behind: Ubuntu
@@ -174,7 +174,7 @@ re-run with everything installed takes about a second.
 | dev-setup source | Pulls the pristine checkout the dotfiles point at, into `~/.local/share/dev-setup/self`. Runs before wiring so paths are recorded once. |
 | Development clones | Interactive, optional. Clones dev-setup and the tool repos into a workspace registry so a choros can hack on them. Nothing is installed from these. |
 | Dotfiles | Wires `~/.zshrc` or `~/.bashrc`, `~/.gitconfig`, and `~/.config/nvim/init.lua`, creating each if absent. |
-| Node | `fnm install --lts` + `fnm default lts-latest`, only if no version exists. fnm ships no Node of its own, so `node`/`npx` — and the `nx` aliases — don't work until this runs. |
+| Node | Symlinks `~/.config/mise/conf.d/dev-setup.toml` to this repo's `mise/config.toml` and installs its global Node (LTS) and pnpm. A project's `.nvmrc` or `.node-version` picks its own Node, installed on first use; pnpm follows the repo's `packageManager` pin. |
 | Neovim | Checks health first; only bootstraps packer, runs `PackerSync`, and builds missing treesitter parsers if something is actually missing. |
 | Git identity | Not automated for the global default. Prints the commands if `user.email` is unset. |
 

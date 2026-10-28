@@ -137,20 +137,13 @@ export PATH="$HOME/.local/bin:$PATH"
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 
 
-# FNM setup, see https://github.com/Schniz/fnm
-# Install: curl -fsSL https://fnm.vercel.app/install | bash
-# Delete the appended text from your .bashrc since we have it here.
-# The curl installer drops the fnm *binary* here, so it needs to go on PATH.
-# Homebrew puts fnm on PATH already, and this is then merely fnm's data dir
-# (aliases/, node-versions/) with no binaries -- so test for the binary, not
-# the directory, or we prepend a junk PATH entry on macOS.
-FNM_PATH="$BASE_PATH/.local/share/fnm"
-if [ -x "$FNM_PATH/fnm" ]; then
-  export PATH="$FNM_PATH:$PATH"
-fi
-
-if command -v fnm >/dev/null 2>&1; then
-  eval "$(fnm env --use-on-cd --shell bash)"
+# mise picks Node per project (.nvmrc, .node-version) and supplies pnpm; its
+# global config is wired by install.sh. Shims rather than `mise activate`:
+# activate switches versions at the prompt, so anything that runs a command
+# without one -- choros, editors, hooks, agents -- would get whatever the
+# last cd chose. A shim decides from the directory each time it runs.
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate bash --shims)"
 fi
 
 if command -v choros >/dev/null 2>&1; then

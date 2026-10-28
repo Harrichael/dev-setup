@@ -6,7 +6,7 @@
 brew "neovim"    # everything under nvim/ depends on this
 brew "git"       # newer than Apple's, and ships its own completions
 brew "git-delta" # required by the `git delta` alias in gitconfig
-brew "fnm"       # node version manager, wired up in bashrc/zshrc
+brew "mise"      # Node and pnpm per project; shims in bashrc/zshrc, config in mise/
 brew "tree"      # required by the `gtree` alias
 brew "ripgrep"
 brew "gh"        # wrapped by gh/gh, which picks the account per workspace

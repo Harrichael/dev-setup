@@ -1,0 +1,12 @@
+# Wired into ~/.config/mise/conf.d/ by install.sh.
+
+[settings]
+# Off by default in mise; without it a repo's .nvmrc is ignored.
+idiomatic_version_file_enable_tools = ["node"]
+
+[tools]
+# Only for directories that pin nothing.
+node = "lts"
+# Standalone pnpm, not corepack (gone from Node 25 on). It still honours a
+# repo's "packageManager" pin by switching itself to that version.
+pnpm = "latest"
