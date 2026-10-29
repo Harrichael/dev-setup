@@ -173,7 +173,8 @@ if command -v choros >/dev/null 2>&1; then
   # enough to run before every prompt.
   __choros_prompt() {
     local t; t="$(command choros status --prompt 2>/dev/null)"
-    __choros_tok="${t:+ %F{yellow}$t%f}"
+    # Not ${t:+...}: the } in %F{yellow} would close that expansion early.
+    if [[ -n $t ]]; then __choros_tok=" %F{yellow}$t%f"; else __choros_tok=; fi
   }
   precmd_functions+=(__choros_prompt)
 fi
