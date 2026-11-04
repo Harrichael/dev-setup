@@ -697,8 +697,9 @@ wire_ordo() {
 
 # chorosd re-syncs Choros landing queues: it notices merged PRs, moves what was
 # queued behind them, and opens the next PRs. Choros's install.sh (tools step)
-# puts it on PATH; this only keeps it running. It shells out to git and gh,
-# which launchd's bare PATH would not find.
+# puts it on PATH; this only keeps it running. It shells out to git, gh and
+# claude, and runs each repo's check (pnpm through mise's shims, go, cargo),
+# none of which launchd's bare PATH would find: so the shell's PATH, in order.
 wire_chorosd() {
   [ "$OS" = macos ] || return 0
   echo "==> chorosd"
@@ -714,7 +715,7 @@ wire_chorosd() {
 	<key>EnvironmentVariables</key>
 	<dict>
 		<key>PATH</key>
-		<string>$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+		<string>$HOME/.local/share/mise/shims:$HOME/.local/bin:$HOME/go/bin:$HOME/.cargo/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin</string>
 	</dict>
 	<key>RunAtLoad</key>
 	<true/>
