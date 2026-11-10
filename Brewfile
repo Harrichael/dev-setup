@@ -12,6 +12,8 @@ brew "ripgrep"
 brew "gh"        # wrapped by gh/gh, which picks the account per workspace
 brew "sccache"   # choros wires it into each new workspace's .cargo/config.toml,
                  # so fresh clones share compiled dependencies
+brew "mergiraf"  # choros merges a conflicted file by its syntax tree with it,
+                 # before asking the agent (a queue's [merge] structural)
 
 cask "kitty"                          # terminal; draws its own tab bar, so a
                                       # tiling WM sees one window, not one per tab
