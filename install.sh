@@ -638,6 +638,33 @@ PLIST
   echo "    starts at login: $plist"
 }
 
+# A running daemon whose binary an install replaced must be loaded afresh, not
+# just restarted. macOS ties a launch constraint to the binary an agent was
+# loaded with; started again on a new binary, the daemon is killed for breaking
+# it ("Launch Constraint Violation") and launchd drops the agent. An agent
+# that isn't running is left alone: this starts nothing that was stopped.
+reload_if_replaced() {
+  local label="$1" bin="$2"
+  local target="gui/$(id -u)" plist="$HOME/Library/LaunchAgents/$label.plist"
+  local pid started tries=0
+  pid="$(launchctl print "$target/$label" 2>/dev/null | awk '$1 == "pid" && !n++ { print $3 }')" || true
+  [ -n "$pid" ] || return 0
+  started="$(date -j -f '%a %b %d %T %Y' "$(LC_ALL=C ps -o lstart= -p "$pid")" +%s 2>/dev/null)" || return 0
+  [ "$(stat -f %m "$bin")" -gt "$started" ] || return 0
+
+  launchctl bootout "$target/$label" 2>/dev/null || true
+  # bootout returns before the agent is gone, and bootstrap refuses until it is.
+  while launchctl print "$target/$label" >/dev/null 2>&1 && [ "$tries" -lt 50 ]; do
+    sleep 0.2
+    tries=$((tries + 1))
+  done
+  if launchctl bootstrap "$target" "$plist"; then
+    echo "    reloaded: it was running the binary this install replaced"
+  else
+    echo "    !! could not reload; start it with: launchctl bootstrap $target $plist"
+  fi
+}
+
 # For an ordinary app. `open -b` rather than the app's binary, so LaunchServices
 # launches the app as itself -- Accessibility is granted to the app, and this
 # finds it wherever it is installed.
@@ -727,6 +754,7 @@ wire_chorosd() {
 	<string>$HOME/Library/Logs/chorosd.log</string>
 	<key>StandardErrorPath</key>
 	<string>$HOME/Library/Logs/chorosd.log</string>"
+  reload_if_replaced "dev-setup.com.harrichael.chorosd" "$bin"
 }
 
 # ergond keeps Ergon's copy of Choros's landings up to date, and sets tasks
@@ -760,6 +788,7 @@ wire_ergond() {
 	<string>$HOME/Library/Logs/ergond.log</string>
 	<key>StandardErrorPath</key>
 	<string>$HOME/Library/Logs/ergond.log</string>"
+  reload_if_replaced "dev-setup.com.harrichael.ergond" "$bin"
 }
 
 # macOS keeps these in cfprefsd, per user. They are environment rather than
