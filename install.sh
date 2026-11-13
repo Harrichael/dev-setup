@@ -729,6 +729,39 @@ wire_chorosd() {
 	<string>$HOME/Library/Logs/chorosd.log</string>"
 }
 
+# ergond keeps Ergon's copy of Choros's landings up to date, and sets tasks
+# done as their landings merge: it follows `choros events` in every trunk.
+# Ergon's install.sh (tools step) puts it on PATH; this only keeps it
+# running. It shells out to choros alone.
+wire_ergond() {
+  [ "$OS" = macos ] || return 0
+  echo "==> ergond"
+  local bin="$HOME/.local/bin/ergond"
+  if [ ! -x "$bin" ]; then
+    echo "    not installed, so not started at login"
+    return 0
+  fi
+  write_launch_agent "dev-setup.com.harrichael.ergond" "	<key>ProgramArguments</key>
+	<array>
+		<string>$bin</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>30</integer>
+	<key>StandardOutPath</key>
+	<string>$HOME/Library/Logs/ergond.log</string>
+	<key>StandardErrorPath</key>
+	<string>$HOME/Library/Logs/ergond.log</string>"
+}
+
 # macOS keeps these in cfprefsd, per user. They are environment rather than
 # config: there is no file to wire, no block to remove, and no way to express
 # them as a dotfile. So dev-setup writes them, and writes ONLY the keys it holds
@@ -1458,6 +1491,7 @@ install_self
 install_tools
 wire_ordo
 wire_chorosd
+wire_ergond
 register_dev_sources
 echo
 wire_shell
